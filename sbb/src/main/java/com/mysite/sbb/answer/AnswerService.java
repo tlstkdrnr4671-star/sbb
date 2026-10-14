@@ -38,8 +38,11 @@ public class AnswerService {
 
 	// ─ create(질문, 내용, 작성자) (v3.08 변경) ─
 	// 매개변수 author 가 추가되었습니다. 이 답변을 쓴 회원입니다.
-	// 반환형은 아직 void 입니다. (v3.11 에서 저장한 답변을 돌려주도록 바뀝니다)
-	public void create(Question question, String content, SiteUser author) {
+	// 반환형은 v3.11 부터 Answer 입니다. (아래 설명 참고)
+	// ─ 반환형 변경 (v3.11) ─ void → Answer
+	// 저장한 답변 객체를 돌려주도록 바뀌었습니다. 컨트롤러가 이 답변의 번호(id)를 알아야
+	// "#answer_번호" 위치로 화면을 이동시킬 수 있기 때문입니다.
+	public Answer create(Question question, String content, SiteUser author) {
 		// 빈 답변 객체를 만듭니다. 아직 DB 에는 없습니다.
 		Answer answer = new Answer();
 		// 내용을 채웁니다.
@@ -53,6 +56,8 @@ public class AnswerService {
 		answer.setAuthor(author);
 		// save : 새 답변을 INSERT 합니다. 이 한 줄이 끝나면 답변이 DB 에 남습니다.
 		this.answerRepository.save(answer);
+		// 저장이 끝난 답변 객체를 돌려줍니다. save 이후라서 DB 가 매긴 id 값이 채워져 있습니다. (v3.11 추가)
+		return answer;
 	}
 
 	// ─ getAnswer(번호) : 답변 한 개 찾기 (v3.09 추가) ─

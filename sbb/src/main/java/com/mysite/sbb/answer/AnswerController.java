@@ -93,9 +93,16 @@ public class AnswerController {
 		}
 		// ─ 저장 (v3.08 변경) ─
 		// 내용과 작성자를 함께 서비스에 맡깁니다. 이제 답변에는 누가 썼는지도 기록됩니다.
-		this.answerService.create(question, answerForm.getContent(), siteUser);
+		// ─ 저장한 답변 받기 (v3.11 변경) ─
+		// create 가 저장한 답변을 돌려주므로 answer 변수에 받아 둡니다. 바로 아래 이동 주소에 답변 번호를 씁니다.
+		Answer answer = this.answerService.create(question, answerForm.getContent(), siteUser);
 		// 저장 후 상세 화면으로 이동합니다.
-		return String.format("redirect:/question/detail/%s", id);
+		// ─ 앵커(#)로 이동 (v3.11 변경) ─
+		// 주소 끝의 #answer_7 같은 부분을 "앵커"라고 합니다. 브라우저는 페이지를 연 뒤 id="answer_7" 인 요소 위치로 스크롤합니다.
+		//   · 첫 번째 %s : 질문 번호, 두 번째 %s : 답변 번호
+		//   · 결과 예) redirect:/question/detail/3#answer_7
+		// 답변이 많아도 방금 쓴 답변으로 바로 화면이 내려갑니다.
+		return String.format("redirect:/question/detail/%s#answer_%s", answer.getQuestion().getId(), answer.getId());
 	}
 
 	// ══ 답변 수정 화면 열기 (v3.09 추가) ══
@@ -143,7 +150,8 @@ public class AnswerController {
 		this.answerService.modify(answer, answerForm.getContent());
 		// 수정이 끝나면 그 답변이 달린 질문의 상세 화면으로 이동합니다.
 		// answer.getQuestion().getId() : 답변 → 소속 질문 → 질문 번호 순서로 꺼냅니다.
-		return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
+		// 수정한 답변 위치(#answer_번호)로 이동합니다. (v3.11 변경)
+		return String.format("redirect:/question/detail/%s#answer_%s", answer.getQuestion().getId(), answer.getId());
 	}
 
 	// ══ 답변 삭제 (v3.09 추가) ══
@@ -177,6 +185,7 @@ public class AnswerController {
 		// 서비스에 추천 기록을 맡깁니다.
 		this.answerService.vote(answer, siteUser);
 		// 추천 후 질문 상세 화면으로 돌아갑니다. 추천 수가 1 늘어난 것이 보입니다.
-		return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
+		// 추천한 답변 위치(#answer_번호)로 이동합니다. (v3.11 변경)
+		return String.format("redirect:/question/detail/%s#answer_%s", answer.getQuestion().getId(), answer.getId());
 	}
 }
