@@ -99,4 +99,13 @@ public class UserController {
 		// 가입이 끝나면 메인 주소(/)로 이동합니다. redirect 라서 새로고침해도 가입이 두 번 되지 않습니다.
 		return "redirect:/";
 	}
+
+	// ─ 로그인 화면 주소 (v3.07 추가) ─
+	// [GET /user/login] 로그인 입력 화면을 보여 줍니다. 로그인 "처리"(POST)는 여기서 하지 않습니다.
+	@GetMapping("/login")
+	// login() : 매개변수가 없는 단순한 메서드입니다. 화면 이름만 돌려줍니다.
+	public String login() {
+		// login_form.html 화면을 그립니다. 비밀번호 검사는 스프링 시큐리티가 formLogin 설정에 따라 합니다.
+		return "login_form";
+	}
 }

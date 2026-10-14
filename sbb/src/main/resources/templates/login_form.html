@@ -1,0 +1,45 @@
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* [login_form.html] 로그인 입력 화면 (v3.07 추가)                              */-->
+<!--/* 아이디와 비밀번호를 입력해 POST /user/login 으로 보냅니다.                          */-->
+<!--/* 이 전송을 받아 처리하는 것은 컨트롤러가 아니라 스프링 시큐리티입니다.                  */-->
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* 공통 틀(layout.html)을 입는 선언입니다.                                           */-->
+<html layout:decorate="~{layout}">
+<!--/* 틀의 content 구멍에 들어갈 내용입니다.                                              */-->
+<div layout:fragment="content" class="container my-3">
+	<!--/* ─ 로그인 폼 ─                                                                    */-->
+	<!--/* [th:action="@{/user/login}"] 전송 주소는 /user/login 입니다.                              */-->
+	<!--/* 이 주소의 POST 요청은 SecurityConfig 의 formLogin 설정이 가로채서 처리합니다. (컨트롤러 메서드 없음) */-->
+	<!--/* method="post" : 비밀번호가 주소창에 드러나지 않도록 본문에 담아 보냅니다.                  */-->
+	<form th:action="@{/user/login}" method="post">
+		<!--/* [th:if="${param.error}"] 주소에 ?error 가 붙어 있을 때만 이 상자를 만듭니다.                 */-->
+		<!--/* 로그인이 실패하면 스프링 시큐리티가 실패 주소 뒤에 ?error 를 붙여 돌려보냅니다.                   */-->
+		<div th:if="${param.error}">
+			<!--/* alert alert-danger : 부트스트랩의 빨간 경고 상자 모양입니다.                               */-->
+			<div class="alert alert-danger">
+				<!--/* 실패 안내 문장입니다. 아이디가 없든 비밀번호가 틀리든 같은 문장을 보여 줍니다.                  */-->
+				<!--/* (아이디 존재 여부를 알려 주지 않으면 공격자가 가입된 아이디를 알아내기 어려워집니다)               */-->
+				사용자ID 또는 비밀번호를 확인해 주세요.
+			</div>
+		</div>
+		<!--/* 아이디 입력 한 줄입니다.                                                           */-->
+		<div class="mb-3">
+			<!--/* 아이디 칸의 이름표입니다.                                                          */-->
+			<label for="username" class="form-label">사용자ID</label>
+			<!--/* name="username" : 스프링 시큐리티가 아이디를 읽을 때 찾는 이름표입니다. 이 이름을 바꾸면 로그인이 되지 않습니다. */-->
+			<!--/* id="username" : 이름표(label)의 for 와 짝을 이루는 번호표입니다. name 과는 역할이 다릅니다.        */-->
+			<input type="text" name="username" id="username" class="form-control">
+		</div>
+		<!--/* 비밀번호 입력 한 줄입니다.                                                          */-->
+		<div class="mb-3">
+			<!--/* 비밀번호 칸의 이름표입니다.                                                         */-->
+			<label for="password" class="form-label">비밀번호</label>
+			<!--/* name="password" : 스프링 시큐리티가 비밀번호를 읽는 이름표입니다. type="password" 라서 글자가 가려집니다. */-->
+			<input type="password" name="password" id="password" class="form-control">
+		</div>
+		<!--/* 로그인 버튼입니다. 누르면 아이디와 비밀번호가 /user/login 으로 전송됩니다.                  */-->
+		<button type="submit" class="btn btn-primary">로그인</button>
+	</form>
+</div>
+
+</html>
