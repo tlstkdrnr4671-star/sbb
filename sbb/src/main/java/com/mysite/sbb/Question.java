@@ -1,0 +1,65 @@
+// ============================================================
+// [강의 노트] Question = "질문" 한 개를 DB 의 question 테이블 한 줄로 표현한 엔티티입니다.
+// 질문 한 개는 답변을 여러 개 가질 수 있습니다. (질문 : 답변 = 1 : N)
+// Answer.java 와 짝을 이루므로 두 파일을 함께 보면 이해가 빠릅니다.
+// ============================================================
+// Answer 와 같은 패키지에 있으므로 서로를 import 없이 부를 수 있습니다.
+package com.mysite.sbb;
+
+// [LocalDateTime] 날짜와 시간 자료형입니다. 질문 작성 시각을 담습니다.
+import java.time.LocalDateTime;
+// [List] 여러 개의 객체를 순서대로 담는 자바 목록(컬렉션)입니다. 여기서는 답변 여러 개를 담습니다.
+// List<Answer> 의 <Answer> 는 "목록 안에 담을 객체 종류"를 뜻하는 제네릭 표기입니다.
+import java.util.List;
+
+// CascadeType : "부모(질문)에 작업을 하면 자식(답변)에도 같은 작업을 적용할지" 정하는 선택지 목록입니다.
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+// OneToMany : "질문 한 개(One) : 답변 여러 개(Many)" 관계를 나타내는 꼬리표입니다.
+import jakarta.persistence.OneToMany;
+
+// [Lombok] @Getter 를 쓰기 위해 가져옵니다. (Answer.java 와 같은 이유)
+import lombok.Getter;
+// [Lombok] @Setter 를 쓰기 위해 가져옵니다.
+import lombok.Setter;
+
+// 모든 필드의 값을 꺼내는 getter 메서드를 자동으로 만듭니다.
+@Getter
+// 모든 필드에 값을 넣는 setter 메서드를 자동으로 만듭니다.
+@Setter
+// [@Entity] Question 도 DB 표(question 테이블)와 연결되는 엔티티라는 표시입니다.
+@Entity
+public class Question {
+	// 기본키(고유 번호)입니다. Answer 와 같은 방식으로 자동 증가합니다.
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer id;
+
+	// [@Column(length = 200)] 제목 열의 최대 길이를 200 글자로 정합니다. 제목은 짧아야 하므로 VARCHAR(200) 이 됩니다.
+	@Column(length = 200)
+	// 질문 제목입니다.
+	private String subject;
+
+	// 질문 내용은 길 수 있으므로 TEXT 로 지정합니다. (Answer.content 와 같은 이유)
+	@Column(columnDefinition = "TEXT")
+	// 질문 내용입니다.
+	private String content;
+
+	// 질문 작성 시각입니다.
+	private LocalDateTime createDate;
+
+	// [@OneToMany] 질문 한 개가 답변 여러 개를 가진다는 관계 꼬리표입니다.
+	// mappedBy = "question" : "답변 쪽의 question 필드가 관계를 관리하는 주인이다"라는 뜻입니다.
+	//   - 외래키(question_id)는 답변 표에 있으므로, 실제 연결 정보는 Answer.question 이 가집니다.
+	//   - 이쪽(Question)은 거울처럼 읽기 위한 쪽입니다. 그래서 "mappedBy(거울에 비친 대상)"라고 부릅니다.
+	// cascade = CascadeType.REMOVE : 질문을 삭제하면, 그 질문에 달린 답변도 함께 삭제합니다.
+	//   (주인 없는 답변이 남아 있는 일을 막기 위함입니다.)
+	@OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE)
+	// 이 질문에 달린 답변들의 목록입니다. DB 에 목록이 따로 저장되지 않고,
+	// 답변 표의 question_id 값을 보고 JPA 가 필요한 답변들을 찾아옵니다.
+	private List<Answer> answerList;
+}
