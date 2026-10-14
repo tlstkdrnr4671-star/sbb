@@ -1,13 +1,41 @@
 <!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* [question_detail.html] 질문 상세 화면 (v2.10 추가)                       */-->
-<!--/* 열리는 주소: GET /question/detail/{id} → QuestionController.detail(id) → "question_detail" → 이 파일 */-->
-<!--/* 화면에 쓰이는 데이터: model 의 question (질문 한 개)                                   */-->
+<!--/* [question_detail.html] 질문 상세 화면 (v2.12 갱신: 답변 목록 + 답변 입력 폼 추가)            */-->
+<!--/* 열리는 주소: GET /question/detail/{id} → QuestionController.detail(id) → "question_detail"          */-->
+<!--/* 화면에 쓰이는 데이터: model 의 question (질문 한 개)                                            */-->
 <!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* [h1] 가장 큰 제목 글씨 태그입니다. 여기에는 질문 제목이 들어갑니다.                           */-->
-<!--/* [th:text="${question.subject}"] question 객체의 subject 값(제목 글자)을 채웁니다.                */-->
-<!--/*   자바 코드로 쓰면 question.getSubject() 를 호출한 결과입니다.                                    */-->
+<!--/* [h1] 가장 큰 제목 글씨입니다. 질문 제목을 넣습니다.                                              */-->
+<!--/* [th:text="${question.subject}"] 질문 제목 글자를 채웁니다. (자바: question.getSubject())         */-->
 <h1 th:text="${question.subject}"></h1>
-<!--/* [div] 내용을 담는 구역(블록)입니다. 줄을 바꾸며 아래로 쌓이는 상자입니다.                         */-->
-<!--/* [th:text="${question.content}"] 질문 내용 글자를 채웁니다. 이 단계에서는 원문 그대로 보입니다.      */-->
-<!--/* (다음 단계에서 마크다운 변환 등 보기 좋게 꾸미는 기능이 추가됩니다)                                   */-->
+<!--/* [div] 내용을 담는 블록 영역입니다. 질문 내용을 그대로 넣습니다.                                    */-->
+<!--/* [th:text="${question.content}"] 질문 내용 글자를 채웁니다. (자바: question.getContent())       */-->
 <div th:text="${question.content}"></div>
+<!--/* ─ 답변 개수 안내 (v2.12 추가) ─                                                             */-->
+<!--/* [h5] 조금 작은 제목 글씨입니다. 답변 개수를 알려 줍니다.                                       */-->
+<!--/* [th:text="|...|"] 리터럴 치환: 글자와 ${...} 값을 섞습니다.                                  */-->
+<!--/*   ${#lists.size(question.answerList)} : 이 질문에 달린 답변 목록의 개수입니다.                  */-->
+<!--/*   예) 답변이 2개면 "2개의 답변이 있습니다." 가 됩니다.                                          */-->
+<h5 th:text="|${#lists.size(question.answerList)}개의 답변이 있습니다.|"></h5>
+<!--/* [div] 답변 목록을 감싸는 블록입니다. (v2.12 추가)                                              */-->
+<div>
+    <!--/* [ul] 순서 없는 목록(글머리 기호 목록)입니다. 안에 li 항목을 넣습니다.                            */-->
+    <ul>
+        <!--/* ─ 답변 목록 반복 (v2.12 추가) ─                                                              */-->
+        <!--/* [th:each="answer : ${question.answerList}"] 답변 목록을 한 개씩 꺼내 li 를 답변 개수만큼 만듭니다. */-->
+        <!--/*   question.answerList 는 질문 객체에 연결된 답변들의 목록입니다. (Question 의 @OneToMany 덕분)    */-->
+        <!--/* [th:text="${answer.content}"] 각 항목에 답변 글을 넣습니다.                                  */-->
+        <li th:each="answer : ${question.answerList}" th:text="${answer.content}"></li>
+    </ul>
+</div>
+<!--/* ─ 답변 입력 폼 (v2.12 추가) ─                                                               */-->
+<!--/* [th:action="@{|/answer/create/${question.id}|}"] 보낼 주소를 만듭니다. 질문 번호가 들어갑니다.    */-->
+<!--/*   예) 질문 3번 화면이면 /answer/create/3 으로 POST 전송합니다.                                  */-->
+<!--/* method="post" : 내용을 묶어서 저장 요청(POST)으로 보냅니다. (GET 과 다릅니다)                    */-->
+<form th:action="@{|/answer/create/${question.id}|}" method="post">
+    <!--/* [textarea] 여러 줄 글을 쓰는 입력 칸입니다. rows="15" 는 보이는 줄 수입니다.                    */-->
+    <!--/* name="content" : 서버로 보낼 때의 이름표입니다. 컨트롤러의 @RequestParam(value = "content") 과 같아야 합니다. */-->
+    <!--/* id="content" : 이 칸을 가리키는 고유 번호표입니다. (나중에 자바스크립트나 라벨에서 찾을 때 씁니다)      */-->
+    <textarea name="content" id="content" rows="15"></textarea>
+    <!--/* [input type="submit"] 누르면 form 의 내용이 th:action 주소로 전송됩니다. 버튼 글자는 value 입니다.  */-->
+    <input type="submit" value="답변등록">
+<!--/* [/form] 입력 폼이 끝나는 닫는 태그입니다.                                                      */-->
+</form>
