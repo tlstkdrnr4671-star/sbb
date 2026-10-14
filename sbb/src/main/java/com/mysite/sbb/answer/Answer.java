@@ -79,12 +79,17 @@ public class Answer {
 	// 이 답변이 달린 질문 객체입니다.
 	// 자바에서는 "객체"로 연결되고, DB 에서는 question_id 번호로 연결됩니다. 이 변환을 JPA 가 해 줍니다.
 	private Question question;
-	
+
 	// ─ 작성자 관계 (v3.08 추가) ─
 	// 한 명의 회원이 여러 답변을 쓸 수 있으므로 "답변 여러 개 : 회원 한 명" 관계입니다. (질문의 question 과 같은 방식)
 	// 답변 표에 author_id 열이 생기고, 여기에 회원 번호가 저장됩니다.
 	@ManyToOne
-    // [author] 이 답변을 쓴 회원 객체입니다. 화면에서 answer.author.username 으로 작성자 이름을 꺼냅니다.
-    // 자바에서는 객체로, DB 에서는 author_id 번호로 연결됩니다.
-    private SiteUser author;
+	// [author] 이 답변을 쓴 회원 객체입니다. 화면에서 answer.author.username 으로 작성자 이름을 꺼냅니다.
+	// 자바에서는 객체로, DB 에서는 author_id 번호로 연결됩니다.
+	private SiteUser author;
+
+	// ─ 수정 일시 (v3.09 추가) ─
+	// 답변을 마지막으로 고친 시각입니다. 처음 저장할 때는 비어 있고(null), 수정할 때만 값이 들어갑니다.
+	// DB 의 answer 표에 modify_date 열이 새로 생깁니다. (ddl-auto=update 가 자동으로 열을 추가)
+	private LocalDateTime modifyDate;
 }

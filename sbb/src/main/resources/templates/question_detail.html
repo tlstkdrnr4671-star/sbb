@@ -19,6 +19,15 @@
 			<div class="card-text" style="white-space: pre-line;" th:text="${question.content}"></div>
 			<!--/* [d-flex justify-content-end] 날짜 상자를 오른쪽 끝으로 밀어 둡니다.                              */-->
 			<div class="d-flex justify-content-end">
+				<!--/* ─ 수정 일시 표시 (v3.09 추가) ─ */-->
+				<!--/* [th:if="${question.modifyDate != null}"] 수정한 적이 있을 때만 이 라벨을 만듭니다. */-->
+				<!--/* [mx-3] 좌우 여백 3 단계입니다. 옆의 작성 일시 라벨과 간격을 둡니다. */-->
+				<div th:if="${question.modifyDate != null}" class="badge bg-light text-dark p-2 text-start mx-3">
+					<!--/* "modified at"(수정 시각) 글자를 보여 줍니다. */-->
+					<div class="mb-2">modified at</div>
+					<!--/* 수정 시각을 'yyyy-MM-dd HH:mm' 모양으로 보여 줍니다. */-->
+					<div th:text="${#temporals.format(question.modifyDate, 'yyyy-MM-dd HH:mm')}"></div>
+				</div>
 				<!--/* [badge] 작은 표시 상자(라벨)입니다. 작성 시각을 담습니다.                                        */-->
 				<div class="badge bg-light text-dark p-2 text-start">
 					<!--/* [작성자 이름] (v3.08 추가) 질문을 쓴 회원의 아이디를 날짜 위에 보여 줍니다. 작성자가 없으면 칸은 비어 있습니다.                                        */-->
@@ -28,6 +37,29 @@
 					<!--/* 질문 작성 시각을 'yyyy-MM-dd HH:mm' 모양으로 보여 줍니다. */-->
 					<div th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></div>
 				</div>
+			</div>
+			<div class="my-3">
+				<!--/* ─ 질문 수정 / 삭제 버튼 (v3.09 추가) ─ */-->
+				<!--/* [my-3] 위아래 여백 3 단계 상자 안에 두 버튼을 둡니다. */-->
+				<!--/* [수정 버튼] 누르면 GET /question/modify/{번호} 로 이동합니다. btn-sm : 작은 버튼, btn-outline-secondary : 회색 테두리 버튼 */-->
+				<!--/* [sec:authorize="isAuthenticated()"] 로그인한 사람에게만 버튼을 만듭니다. */-->
+				<!--/* [th:if="${question.author != null and #authentication.getPrincipal().getUsername() == question.author.username}"] */-->
+				<!--/*   · 작성자가 있고, 로그인한 아이디와 작성자 아이디가 같을 때만 = "내 글"일 때만 보입니다. */-->
+				<!--/*   · #authentication : 로그인 정보 객체, getPrincipal().getUsername() : 로그인한 아이디 */-->
+				<!--/*   · and : 두 조건이 모두 참이어야 참입니다. author 가 null 이면 뒤 조건을 보지 않아 오류가 나지 않습니다. */-->
+				<!--/* [th:text="수정"] 버튼 글자입니다. */-->
+				<a th:href="@{|/question/modify/${question.id}|}" class="btn btn-sm btn-outline-secondary"
+					sec:authorize="isAuthenticated()"
+					th:if="${question.author != null and #authentication.getPrincipal().getUsername() == question.author.username}"
+					th:text="수정"></a>
+				<!--/* [삭제 버튼] 바로 이동하지 않고 확인 창을 먼저 띄웁니다. */-->
+				<!--/*   · href="javascript:void(0);" : 눌러도 아무 데도 이동하지 않는 링크입니다. */-->
+				<!--/*   · th:data-uri : 삭제 주소를 data-uri 속성에 숨겨 둡니다. 아래 스크립트가 이 값을 꺼내 씁니다. */-->
+				<!--/*   · class="delete ..." : 스크립트가 "delete" 클래스를 가진 버튼을 모두 찾아 클릭 동작을 붙입니다. */-->
+				<a href="javascript:void(0);" th:data-uri="@{|/question/delete/${question.id}|}"
+					class="delete btn btn-sm btn-outline-secondary" sec:authorize="isAuthenticated()"
+					th:if="${question.author != null and #authentication.getPrincipal().getUsername() == question.author.username}"
+					th:text="삭제"></a>
 			</div>
 		</div>
 	</div>
@@ -44,6 +76,13 @@
 			<div class="card-text" style="white-space: pre-line;" th:text="${answer.content}"></div>
 			<!--/* (답변 카드) 날짜 상자를 오른쪽 끝에 둡니다.                                                      */-->
 			<div class="d-flex justify-content-end">
+				<!--/* (답변 카드) 수정한 적이 있을 때만 수정 일시 라벨을 보여 줍니다. (v3.09 추가) */-->
+				<div th:if="${answer.modifyDate != null}" class="badge bg-light text-dark p-2 text-start mx-3">
+					<!--/* (답변 카드) "modified at" 글자입니다. */-->
+					<div class="mb-2">modified at</div>
+					<!--/* (답변 카드) 답변 수정 시각입니다. */-->
+					<div th:text="${#temporals.format(answer.modifyDate, 'yyyy-MM-dd HH:mm')}"></div>
+				</div>
 				<!--/* (답변 카드) 작성 시각 라벨입니다.                                                              */-->
 				<div class="badge bg-light text-dark p-2 text-start">
 					<!--/* (답변 카드) 답변 작성자 이름을 날짜 위에 보여 줍니다. (v3.08 추가) 작성자가 있을 때만 출력합니다.                                           */-->
@@ -53,6 +92,19 @@
 					<!--/* (답변 카드) 답변 작성 시각을 같은 모양으로 보여 줍니다. */-->
 					<div th:text="${#temporals.format(answer.createDate, 'yyyy-MM-dd HH:mm')}"></div>
 				</div>
+			</div>
+			<div class="my-3">
+				<!--/* (답변 카드) 수정 / 삭제 버튼입니다. 질문 버튼과 같은 규칙으로 "내 답변"일 때만 보입니다. (v3.09 추가) */-->
+				<!--/* [수정] GET /answer/modify/{답변번호} 로 이동합니다. */-->
+				<a th:href="@{|/answer/modify/${answer.id}|}" class="btn btn-sm btn-outline-secondary"
+					sec:authorize="isAuthenticated()"
+					th:if="${answer.author != null and #authentication.getPrincipal().getUsername() == answer.author.username}"
+					th:text="수정"></a>
+				<!--/* [삭제] 확인 창을 거친 뒤 /answer/delete/{답변번호} 로 이동합니다. */-->
+				<a href="javascript:void(0);" th:data-uri="@{|/answer/delete/${answer.id}|}"
+					class="delete btn btn-sm btn-outline-secondary" sec:authorize="isAuthenticated()"
+					th:if="${answer.author != null and #authentication.getPrincipal().getUsername() == answer.author.username}"
+					th:text="삭제"></a>
 			</div>
 		</div>
 	</div>
@@ -78,5 +130,26 @@
 		<input type="submit" value="답변등록" class="btn btn-primary my-2">
 	</form>
 </div>
+<!--/* ═══ 삭제 확인 스크립트 (v3.09 추가) ═══ */-->
+<!--/* [layout:fragment="script"] layout.html 의 script 구멍(th:block)에 이 script 태그가 끼워집니다. */-->
+<!--/* 동작 순서: 삭제 버튼 클릭 → "정말로 삭제하시겠습니까?" 확인 창 → 확인을 누르면 data-uri 주소로 이동 */-->
+<script layout:fragment="script" type='text/javascript'>
+	// [const] 다시 바꾸지 않을 변수를 만듭니다.
+	// document.getElementsByClassName("delete") : 화면에서 class 에 delete 가 들어간 요소를 모두 찾습니다.
+	const delete_elements = document.getElementsByClassName("delete");
+	// Array.from(...) : 찾은 요소 묶음을 배열로 바꿉니다. 그래야 forEach 를 쓸 수 있습니다.
+	// forEach(function (element) {...}) : 배열의 요소를 하나씩 element 로 꺼내 중괄호 안을 실행합니다.
+	Array.from(delete_elements).forEach(function (element) {
+		// addEventListener('click', 함수) : 이 버튼을 클릭하면 실행할 함수를 붙입니다.
+		element.addEventListener('click', function () {
+			// confirm(메시지) : 확인/취소 창을 띄웁니다. 확인을 누르면 true, 취소를 누르면 false 입니다.
+			if (confirm("정말로 삭제하시겠습니까?")) {
+				// location.href = 주소 : 브라우저를 그 주소로 이동시킵니다.
+				// this.dataset.uri : 클릭한 버튼의 data-uri 값(삭제 주소)입니다.
+				location.href = this.dataset.uri;
+			};
+		});
+	});
+</script>
 
 </html>

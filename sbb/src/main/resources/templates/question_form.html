@@ -13,7 +13,18 @@
 	<!--/* [th:action="@{/question/create}"] 전송 주소는 /question/create 입니다.                      */-->
 	<!--/* [th:object="${questionForm}"] 이 폼은 컨트롤러가 넘긴 QuestionForm 객체와 연결됩니다.          */-->
 	<!--/* method="post" : 내용을 묶어서 저장 요청으로 보냅니다.                                        */-->
-	<form th:action="@{/question/create}" th:object="${questionForm}" method="post">
+	<!--/* ─ th:action 제거 (v3.09 변경) ─ */-->
+	<!--/* 위 설명의 th:action 은 이제 없습니다. action 이 없으면 폼은 "지금 열려 있는 주소"로 전송됩니다. */-->
+	<!--/*   · /question/create 에서 열었으면 → POST /question/create (등록) */-->
+	<!--/*   · /question/modify/3 에서 열었으면 → POST /question/modify/3 (수정) */-->
+	<!--/* 그래서 한 화면 파일로 등록과 수정을 모두 처리할 수 있습니다. */-->
+	<form th:object="${questionForm}" method="post">
+		<!--/* ─ CSRF 토큰 직접 넣기 (v3.09 추가) ─ */-->
+		<!--/* th:action 을 쓰면 Thymeleaf 가 CSRF 토큰을 자동으로 넣어 주었지만, th:action 을 지웠으므로 직접 넣습니다. */-->
+		<!--/* [type="hidden"] 화면에 보이지 않는 입력 칸입니다. */-->
+		<!--/* [th:name="${_csrf.parameterName}"] 이름은 _csrf, [th:value="${_csrf.token}"] 값은 서버가 만든 임의의 토큰입니다. */-->
+		<!--/* 이 값이 없으면 Spring Security 가 "위조된 요청"으로 보고 403 오류로 막습니다. */-->
+		<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 		<!--/* 오류 메시지 조각(form_errors.html)을 이 자리에 끼워 넣습니다. 검사에 실패하면 빨간 경고가 보입니다. */-->
 		<div th:replace="~{form_errors :: formErrorsFragment}"></div>
 		<!--/* 제목 입력 한 줄입니다. mb-3 은 아래 여백입니다.                                             */-->

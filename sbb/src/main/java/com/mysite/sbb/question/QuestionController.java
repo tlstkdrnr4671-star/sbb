@@ -13,6 +13,8 @@ import java.security.Principal;
 
 // [Page] 한 페이지 분량의 질문 상자입니다.
 import org.springframework.data.domain.Page;
+// [HttpStatus] 응답 상태 코드 이름표 모음입니다. BAD_REQUEST = 400 (v3.09 추가)
+import org.springframework.http.HttpStatus;
 // [@PreAuthorize] 메서드 실행 전 권한을 검사하는 꼬리표입니다. (v3.08 추가)
 import org.springframework.security.access.prepost.PreAuthorize;
 // [@Controller] 웹 요청 창구 꼬리표입니다.
@@ -31,6 +33,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 // [@RequestParam] ?page= 같은 주소 값을 받는 꼬리표입니다.
 import org.springframework.web.bind.annotation.RequestParam;
+// [ResponseStatusException] 지정한 상태 코드로 요청을 거절하는 예외입니다. (v3.09 추가)
+import org.springframework.web.server.ResponseStatusException;
 
 // 상세 화면의 답변 입력 폼 객체 타입입니다.
 import com.mysite.sbb.answer.AnswerForm;
@@ -112,5 +116,69 @@ public class QuestionController {
 		this.questionService.create(questionForm.getSubject(), questionForm.getContent(), siteUser);
 		// 저장 후 목록 화면으로 이동합니다.
 		return "redirect:/question/list";
+	}
+
+	// ══ 질문 수정 화면 열기 (v3.09 추가) ══
+	// [GET /question/modify/{id}] 수정 버튼을 누르면 실행됩니다.
+	// 질문 등록 화면(question_form.html)을 그대로 재사용하고, 기존 제목과 내용을 미리 채워 보여 줍니다.
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/modify/{id}")
+	// 매개변수: 빈 폼 객체, 질문 번호, 로그인 사용자 정보
+	public String questionModify(QuestionForm questionForm, @PathVariable("id") Integer id, Principal principal) {
+		// 고칠 질문을 번호로 꺼냅니다.
+		Question question = this.questionService.getQuestion(id);
+		// ─ 본인 확인 ─
+		// 질문 작성자 아이디와 로그인한 아이디가 다르면 남의 글이므로 거절합니다. (equals 로 문자열 비교)
+		if (!question.getAuthor().getUsername().equals(principal.getName())) {
+			// 400 오류로 거절합니다.
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
+		}
+		// 기존 제목을 폼에 채웁니다.
+		questionForm.setSubject(question.getSubject());
+		// 기존 내용을 폼에 채웁니다.
+		questionForm.setContent(question.getContent());
+		// 질문 입력 화면을 그립니다. (등록 화면과 같은 파일을 수정용으로도 씁니다)
+		return "question_form";
+	}
+
+	// ══ 질문 수정 저장 (v3.09 추가) ══
+	// [POST /question/modify/{id}] 수정 화면에서 "저장하기"를 누르면 실행됩니다.
+	@PreAuthorize("isAuthenticated()")
+	@PostMapping("/modify/{id}")
+	// 입력값 검사(@Valid) 결과, 로그인 정보, 질문 번호를 받습니다.
+	public String questionModify(@Valid QuestionForm questionForm, BindingResult bindingResult, Principal principal,
+			@PathVariable("id") Integer id) {
+		// 제목이나 내용이 잘못되었으면 저장하지 않고 화면을 다시 보여 줍니다.
+		if (bindingResult.hasErrors()) {
+			return "question_form";
+		}
+		// 고칠 질문을 꺼냅니다.
+		Question question = this.questionService.getQuestion(id);
+		// 저장할 때도 본인 확인을 다시 합니다.
+		if (!question.getAuthor().getUsername().equals(principal.getName())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
+		}
+		// 새 제목, 새 내용으로 수정을 맡깁니다. (UPDATE)
+		this.questionService.modify(question, questionForm.getSubject(), questionForm.getContent());
+		// 수정이 끝나면 그 질문의 상세 화면으로 이동합니다.
+		return String.format("redirect:/question/detail/%s", id);
+	}
+
+	// ══ 질문 삭제 (v3.09 추가) ══
+	// [GET /question/delete/{id}] 삭제 확인 창에서 "확인"을 누르면 실행됩니다.
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/delete/{id}")
+	// 매개변수: 로그인 사용자 정보, 지울 질문 번호
+	public String questionDelete(Principal principal, @PathVariable("id") Integer id) {
+		// 지울 질문을 꺼냅니다.
+		Question question = this.questionService.getQuestion(id);
+		// 본인 글이 아니면 지울 수 없습니다.
+		if (!question.getAuthor().getUsername().equals(principal.getName())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "삭제권한이 없습니다.");
+		}
+		// 삭제를 맡깁니다. 달린 답변도 함께 지워집니다. (cascade)
+		this.questionService.delete(question);
+		// 삭제 후 첫 화면("/")으로 이동합니다. MainController 가 다시 질문 목록으로 보내 줍니다.
+		return "redirect:/";
 	}
 }

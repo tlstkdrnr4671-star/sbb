@@ -28,7 +28,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 // OneToMany : "질문 한 개(One) : 답변 여러 개(Many)" 관계를 나타내는 꼬리표입니다.
 import jakarta.persistence.OneToMany;
-
 // [Lombok] @Getter 를 쓰기 위해 가져옵니다. (Answer.java 와 같은 이유)
 import lombok.Getter;
 // [Lombok] @Setter 를 쓰기 위해 가져옵니다.
@@ -69,11 +68,16 @@ public class Question {
 	// 이 질문에 달린 답변들의 목록입니다. DB 에 목록이 따로 저장되지 않고,
 	// 답변 표의 question_id 값을 보고 JPA 가 필요한 답변들을 찾아옵니다.
 	private List<Answer> answerList;
-	
+
 	// ─ 질문의 작성자 관계 (v3.08 추가) ─
 	// 한 회원이 여러 질문을 쓸 수 있으므로 "질문 여러 개 : 회원 한 명" 관계입니다.
 	// 질문 표에 author_id 열이 생기고, 여기에 회원 번호가 저장됩니다.
 	@ManyToOne
-    // [author] 이 질문을 쓴 회원 객체입니다. 화면에서 question.author.username 으로 작성자 이름을 꺼냅니다.
-    private SiteUser author;
+	// [author] 이 질문을 쓴 회원 객체입니다. 화면에서 question.author.username 으로 작성자 이름을 꺼냅니다.
+	private SiteUser author;
+
+	// ─ 수정 일시 (v3.09 추가) ─
+	// 질문을 마지막으로 고친 시각입니다. 한 번도 고치지 않았으면 null 입니다.
+	// 화면에서는 이 값이 있을 때만 "modified at" 표시를 보여 줍니다.
+	private LocalDateTime modifyDate;
 }

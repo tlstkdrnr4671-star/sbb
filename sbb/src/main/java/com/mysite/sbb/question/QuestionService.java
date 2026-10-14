@@ -104,4 +104,22 @@ public class QuestionService {
 		// save : INSERT 로 question 표에 한 줄을 추가합니다.
 		this.questionRepository.save(q);
 	}
+
+	// ─ modify(질문, 새 제목, 새 내용) : 질문 수정 (v3.09 추가) ─
+	public void modify(Question question, String subject, String content) {
+		// 제목을 바꿉니다.
+		question.setSubject(subject);
+		// 내용을 바꿉니다.
+		question.setContent(content);
+		// 수정 시각을 지금으로 기록합니다.
+		question.setModifyDate(LocalDateTime.now());
+		// 기존 질문(id 있음)을 save 하므로 UPDATE 가 실행됩니다.
+		this.questionRepository.save(question);
+	}
+
+	// ─ delete(질문) : 질문 삭제 (v3.09 추가) ─
+	public void delete(Question question) {
+		// 질문을 지웁니다. Question.answerList 의 cascade = REMOVE 설정 덕분에 달린 답변들도 함께 지워집니다.
+		this.questionRepository.delete(question);
+	}
 }

@@ -16,6 +16,8 @@ package com.mysite.sbb.answer;
 // [Principal] 지금 로그인한 사용자 정보를 담는 객체입니다. principal.getName() 으로 아이디를 얻습니다. (v3.08 추가)
 import java.security.Principal;
 
+// [HttpStatus] 응답 상태 코드(200, 400, 404 ...) 이름표 모음입니다. BAD_REQUEST 는 400 입니다. (v3.09 추가)
+import org.springframework.http.HttpStatus;
 // [@PreAuthorize] 메서드 실행 전에 권한을 검사하는 꼬리표입니다. 조건이 거짓이면 메서드가 실행되지 않습니다. (v3.08 추가)
 import org.springframework.security.access.prepost.PreAuthorize;
 // [@Controller] 웹 요청 창구 클래스 꼬리표입니다.
@@ -24,12 +26,16 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 // [BindingResult] 입력 검사 결과 보관함입니다.
 import org.springframework.validation.BindingResult;
+// [@GetMapping] GET 요청을 메서드와 연결합니다. 수정 화면, 삭제 요청에 씁니다. (v3.09 추가)
+import org.springframework.web.bind.annotation.GetMapping;
 // [@PathVariable] 주소의 {id} 값을 꺼내는 꼬리표입니다.
 import org.springframework.web.bind.annotation.PathVariable;
 // [@PostMapping] POST 요청을 메서드와 연결합니다.
 import org.springframework.web.bind.annotation.PostMapping;
 // [@RequestMapping] 클래스 공통 주소 "/answer" 를 정합니다.
 import org.springframework.web.bind.annotation.RequestMapping;
+// [ResponseStatusException] 지정한 상태 코드로 요청을 거절하는 예외입니다. (v3.09 추가)
+import org.springframework.web.server.ResponseStatusException;
 
 // 질문 객체 타입입니다.
 import com.mysite.sbb.question.Question;
@@ -90,5 +96,71 @@ public class AnswerController {
 		this.answerService.create(question, answerForm.getContent(), siteUser);
 		// 저장 후 상세 화면으로 이동합니다.
 		return String.format("redirect:/question/detail/%s", id);
+	}
+
+	// ══ 답변 수정 화면 열기 (v3.09 추가) ══
+	// [GET /answer/modify/{id}] 수정 버튼을 누르면 실행됩니다. 로그인한 사람만 열 수 있습니다.
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/modify/{id}")
+	// 매개변수: 빈 폼 객체, 답변 번호, 로그인 사용자 정보
+	public String answerModify(AnswerForm answerForm, @PathVariable("id") Integer id, Principal principal) {
+		// 고칠 답변을 번호로 꺼냅니다.
+		Answer answer = this.answerService.getAnswer(id);
+		// ─ 본인 확인 ─
+		// 답변 작성자 아이디와 로그인한 아이디가 다르면(!) 남의 글이므로 거절합니다.
+		//   · answer.getAuthor().getUsername() : 작성자 아이디
+		//   · principal.getName()             : 지금 로그인한 아이디
+		//   · equals : 문자열 내용이 같은지 비교합니다. (== 는 객체가 같은지 비교하므로 문자열엔 쓰지 않습니다)
+		if (!answer.getAuthor().getUsername().equals(principal.getName())) {
+			// 400 오류와 함께 "수정권한이 없습니다." 메시지로 요청을 거절합니다.
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
+		}
+		// 기존 내용을 폼에 미리 채워 둡니다. 그래야 수정 화면 입력 칸에 원래 글이 보입니다.
+		answerForm.setContent(answer.getContent());
+		// 답변 수정 화면(answer_form.html)을 그립니다.
+		return "answer_form";
+	}
+
+	// ══ 답변 수정 저장 (v3.09 추가) ══
+	// [POST /answer/modify/{id}] 수정 화면에서 "저장하기"를 누르면 실행됩니다.
+	// GET 과 이름(answerModify)이 같지만 매개변수가 달라서 자바에서 함께 쓸 수 있습니다. (메서드 오버로딩)
+	@PreAuthorize("isAuthenticated()")
+	@PostMapping("/modify/{id}")
+	// @Valid 로 입력값(내용 비었는지)을 검사하고, 결과는 bindingResult 에 담깁니다.
+	public String answerModify(@Valid AnswerForm answerForm, BindingResult bindingResult,
+			@PathVariable("id") Integer id, Principal principal) {
+		// 내용이 비어 있으면 저장하지 않고 수정 화면을 다시 보여 줍니다.
+		if (bindingResult.hasErrors()) {
+			return "answer_form";
+		}
+		// 고칠 답변을 꺼냅니다.
+		Answer answer = this.answerService.getAnswer(id);
+		// 저장할 때도 본인인지 다시 확인합니다. (주소를 직접 입력해 보내는 경우까지 막기 위해)
+		if (!answer.getAuthor().getUsername().equals(principal.getName())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
+		}
+		// 서비스에 새 내용으로 수정을 맡깁니다. (UPDATE)
+		this.answerService.modify(answer, answerForm.getContent());
+		// 수정이 끝나면 그 답변이 달린 질문의 상세 화면으로 이동합니다.
+		// answer.getQuestion().getId() : 답변 → 소속 질문 → 질문 번호 순서로 꺼냅니다.
+		return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
+	}
+
+	// ══ 답변 삭제 (v3.09 추가) ══
+	// [GET /answer/delete/{id}] 삭제 버튼을 누르고 확인 창에서 "확인"을 고르면 실행됩니다.
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/delete/{id}")
+	// 매개변수: 로그인 사용자 정보, 지울 답변 번호
+	public String answerDelete(Principal principal, @PathVariable("id") Integer id) {
+		// 지울 답변을 꺼냅니다.
+		Answer answer = this.answerService.getAnswer(id);
+		// 본인 글이 아니면 지울 수 없습니다.
+		if (!answer.getAuthor().getUsername().equals(principal.getName())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "삭제권한이 없습니다.");
+		}
+		// 서비스에 삭제를 맡깁니다. (DELETE)
+		this.answerService.delete(answer);
+		// 삭제 후 질문 상세 화면으로 돌아갑니다. (답변 객체는 메모리에 남아 있어서 질문 번호를 꺼낼 수 있습니다)
+		return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
 	}
 }
