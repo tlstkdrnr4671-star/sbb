@@ -32,6 +32,8 @@ import org.springframework.stereotype.Service;
 
 // 데이터가 없을 때 던지는 예외 클래스입니다.
 import com.mysite.sbb.DataNotFoundException;
+// [SiteUser] 질문 작성자 회원의 타입입니다. (v3.08 추가)
+import com.mysite.sbb.user.SiteUser;
 
 // [Lombok] 생성자 자동 생성 꼬리표를 가져옵니다.
 import lombok.RequiredArgsConstructor;
@@ -51,24 +53,24 @@ public class QuestionService {
 	//   · int page : 요청한 페이지 번호입니다. 0 이 첫 페이지입니다. (예: 2 이면 세 번째 페이지)
 	//   · 반환형 Page<Question> : 질문 10개(또는 그보다 적은 수)와 페이지 정보를 함께 담은 상자입니다.
 	public Page<Question> getList(int page) {
-        // ─ 정렬 조건 목록 만들기 ─
-        // 정렬 규칙을 여러 개 담을 수 있도록 목록을 준비합니다. <Sort.Order> 는 "정렬 한 개"를 뜻하는 제네릭 표기입니다.
-        List<Sort.Order> sorts = new ArrayList<>();
-        // ─ 정렬 규칙 추가 ─
-        // Sort.Order.desc("createDate") : 작성 시각(createDate 필드) 기준 내림차순(큰 값 먼저) 정렬입니다.
-        //   · 시각이 큰 값 = 나중에 쓴 글 → 최신 글이 목록의 맨 위에 옵니다.
-        //   · desc = descending(내림차순), asc = ascending(오름차순)입니다.
-        sorts.add(Sort.Order.desc("createDate"));
-        // ─ 요청서 만들기 ─
-        // PageRequest.of(페이지 번호, 페이지 크기, 정렬) 으로 "이 페이지를, 10개씩, 이 정렬로" 라는 요청서를 만듭니다.
-        //   · 예) page=0 이면 최신 10개, page=1 이면 그 다음 10개입니다.
-        //   · SQL 로는 대략 order by create_date desc limit 10 offset (page × 10) 입니다.
-        Pageable pageable = PageRequest.of(page, 10, Sort.by(sorts));
-        // ─ 저장소에 요청서 전달 ─
-        // 요청서를 저장소에 넘기면 해당 페이지의 질문과 페이지 정보가 Page 상자에 담겨 돌아옵니다.
-        // 이 메서드는 그 결과를 그대로 호출한 곳(QuestionController)에 전달합니다.
-        return this.questionRepository.findAll(pageable);
-    }
+		// ─ 정렬 조건 목록 만들기 ─
+		// 정렬 규칙을 여러 개 담을 수 있도록 목록을 준비합니다. <Sort.Order> 는 "정렬 한 개"를 뜻하는 제네릭 표기입니다.
+		List<Sort.Order> sorts = new ArrayList<>();
+		// ─ 정렬 규칙 추가 ─
+		// Sort.Order.desc("createDate") : 작성 시각(createDate 필드) 기준 내림차순(큰 값 먼저) 정렬입니다.
+		//   · 시각이 큰 값 = 나중에 쓴 글 → 최신 글이 목록의 맨 위에 옵니다.
+		//   · desc = descending(내림차순), asc = ascending(오름차순)입니다.
+		sorts.add(Sort.Order.desc("createDate"));
+		// ─ 요청서 만들기 ─
+		// PageRequest.of(페이지 번호, 페이지 크기, 정렬) 으로 "이 페이지를, 10개씩, 이 정렬로" 라는 요청서를 만듭니다.
+		//   · 예) page=0 이면 최신 10개, page=1 이면 그 다음 10개입니다.
+		//   · SQL 로는 대략 order by create_date desc limit 10 offset (page × 10) 입니다.
+		Pageable pageable = PageRequest.of(page, 10, Sort.by(sorts));
+		// ─ 저장소에 요청서 전달 ─
+		// 요청서를 저장소에 넘기면 해당 페이지의 질문과 페이지 정보가 Page 상자에 담겨 돌아옵니다.
+		// 이 메서드는 그 결과를 그대로 호출한 곳(QuestionController)에 전달합니다.
+		return this.questionRepository.findAll(pageable);
+	}
 
 	// getQuestion(id) : 번호로 질문 한 개를 찾습니다. (v2.10 부터 있던 메서드, 설명 유지)
 	public Question getQuestion(Integer id) {
@@ -85,7 +87,9 @@ public class QuestionService {
 	}
 
 	// create(제목, 내용) : 질문을 저장합니다. (v2.16 부터 있던 메서드, 설명 유지)
-	public void create(String subject, String content) {
+	// ─ create(제목, 내용, 작성자) (v3.08 변경) ─
+	// 작성자(user) 매개변수가 추가되었습니다. 질문을 누가 썼는지 함께 저장합니다.
+	public void create(String subject, String content, SiteUser user) {
 		// 빈 질문 객체를 만듭니다.
 		Question q = new Question();
 		// 제목을 채웁니다.
@@ -94,6 +98,9 @@ public class QuestionService {
 		q.setContent(content);
 		// 작성 시각을 지금으로 채웁니다.
 		q.setCreateDate(LocalDateTime.now());
+		// ─ 작성자 연결 (v3.08 추가) ─
+		// 질문에 작성자 회원을 연결합니다. 저장되면 question 표의 author_id 열에 회원 번호가 들어갑니다.
+		q.setAuthor(user);
 		// save : INSERT 로 question 표에 한 줄을 추가합니다.
 		this.questionRepository.save(q);
 	}

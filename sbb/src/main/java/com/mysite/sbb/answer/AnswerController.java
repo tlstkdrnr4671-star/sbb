@@ -1,25 +1,30 @@
 // ══════════════════════════════════════════════════════════════════════
-// [AnswerController = 답변 등록 창구] (v2.16 갱신: 입력 검사 추가)
+// [AnswerController = 답변 등록 창구] (v3.08 갱신: 로그인한 회원만, 작성자 기록)
 // ══════════════════════════════════════════════════════════════════════
 //
-// 흐름 (v2.16)
-//   1) 답변 폼에서 "답변등록" → POST /answer/create/{id}
-//   2) 스프링이 폼 값을 AnswerForm 에 담음 (데이터 바인딩)
-//   3) @Valid 가 AnswerForm 의 규칙(@NotEmpty)을 검사하고, 결과를 BindingResult 에 기록
-//   4-a) 오류가 있으면 : 저장하지 않고 질문 상세 화면을 다시 그림 (오류 메시지 표시)
-//   4-b) 오류가 없으면 : 답변을 저장하고 상세 화면으로 redirect
+// 흐름 (v3.08)
+//   1) 로그인 여부 검사 : @PreAuthorize("isAuthenticated()") 가 메서드 실행 전에 확인합니다.
+//   2) 입력 검사       : @Valid AnswerForm 과 BindingResult 가 내용을 검사합니다.
+//   3) 질문 찾기       : 질문 번호로 Question 객체를 찾습니다.
+//   4) 작성자 찾기     : Principal 로 지금 로그인한 아이디를 얻고, 그 아이디로 SiteUser 를 찾습니다.
+//   5) 저장           : 내용 + 작성자를 AnswerService 에 맡깁니다.
+//   6) 이동           : 질문 상세 화면으로 redirect 합니다.
 // ══════════════════════════════════════════════════════════════════════
 // 답변 관련 클래스가 모인 폴더 주소입니다.
 package com.mysite.sbb.answer;
 
+// [Principal] 지금 로그인한 사용자 정보를 담는 객체입니다. principal.getName() 으로 아이디를 얻습니다. (v3.08 추가)
+import java.security.Principal;
+
+// [@PreAuthorize] 메서드 실행 전에 권한을 검사하는 꼬리표입니다. 조건이 거짓이면 메서드가 실행되지 않습니다. (v3.08 추가)
+import org.springframework.security.access.prepost.PreAuthorize;
 // [@Controller] 웹 요청 창구 클래스 꼬리표입니다.
 import org.springframework.stereotype.Controller;
-// [Model] 화면에 넘길 데이터 바구니입니다. 검사에 실패했을 때 질문 정보를 다시 담는 데 씁니다.
+// [Model] 화면에 넘길 데이터 바구니입니다.
 import org.springframework.ui.Model;
-// [BindingResult] 입력 검사 결과 보관함입니다. 오류가 있으면 여기 기록되고, hasErrors() 로 확인합니다. (v2.16 추가)
-//   · 반드시 검사 대상 객체(@Valid AnswerForm) 바로 뒤에 적어야 스프링이 결과를 연결해 줍니다.
+// [BindingResult] 입력 검사 결과 보관함입니다.
 import org.springframework.validation.BindingResult;
-// [@PathVariable] 주소의 {id} 자리 값(질문 번호)을 꺼내는 꼬리표입니다.
+// [@PathVariable] 주소의 {id} 값을 꺼내는 꼬리표입니다.
 import org.springframework.web.bind.annotation.PathVariable;
 // [@PostMapping] POST 요청을 메서드와 연결합니다.
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,51 +33,62 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 // 질문 객체 타입입니다.
 import com.mysite.sbb.question.Question;
-// 질문을 찾아 주는 업무 담당입니다.
+// 질문을 찾는 업무 담당입니다.
 import com.mysite.sbb.question.QuestionService;
+// 작성자 회원 객체 타입입니다. (v3.08 추가)
+import com.mysite.sbb.user.SiteUser;
+// 지금 로그인한 회원을 찾아 주는 업무 담당입니다. (v3.08 추가)
+import com.mysite.sbb.user.UserService;
 
-// [@Valid] "이 객체의 검사 규칙을 실행하라"는 꼬리표입니다. (v2.16 추가)
+// [@Valid] 입력값 검사를 실행하라는 꼬리표입니다.
 import jakarta.validation.Valid;
 // [Lombok] 생성자 자동 생성 꼬리표를 가져옵니다.
 import lombok.RequiredArgsConstructor;
 
 // 이 클래스의 모든 주소 앞에 /answer 를 붙입니다.
 @RequestMapping("/answer")
-// final 필드 두 개를 받는 생성자를 자동으로 만듭니다. (생성자 주입, DI)
+// final 필드 세 개를 받는 생성자를 자동으로 만듭니다. (생성자 주입, DI)
 @RequiredArgsConstructor
 // 웹 요청 창구임을 스프링에게 알립니다.
 @Controller
 // 답변 관련 요청을 담당하는 창구 클래스입니다.
 public class AnswerController {
 
-	// 질문을 찾는 업무 담당입니다.
+	// 질문 업무 담당입니다.
 	private final QuestionService questionService;
-	// 답변을 저장하는 업무 담당입니다.
+	// 답변 업무 담당입니다.
 	private final AnswerService answerService;
+	// 회원 업무 담당입니다. 지금 로그인한 회원을 찾을 때 씁니다. (v3.08 추가)
+	private final UserService userService;
 
-	// ─ 주소 연결 ─
-	// [POST /answer/create/{id}] 답변 등록 폼을 보내면 createAnswer() 가 실행됩니다.
+	// ─ 로그인 필수 (v3.08 추가) ─
+	// 로그인하지 않은 사람이 이 메서드를 부르면 메서드 안은 실행되지 않고 막힙니다.
+	// 로그인하지 않은 상태에서 "답변등록"을 눌러도 저장되지 않는 이유입니다.
+	@PreAuthorize("isAuthenticated()")
+	// [POST /answer/create/{id}] 답변 등록 요청을 처리합니다.
 	@PostMapping("/create/{id}")
-	// ─ createAnswer() 매개변수 ─
-	//   Model model         : 화면 바구니 (검사 실패 시 질문 정보를 다시 담습니다)
-	//   @PathVariable id    : 질문 번호 (예: 3)
-	//   @Valid AnswerForm  : 폼 값을 담은 객체. @Valid 로 검사 규칙을 실행합니다. (v2.16 변경: 이전에는 @RequestParam 으로 글만 받았습니다)
+	// createAnswer() 의 매개변수 다섯 개입니다. 뒤쪽에 Principal 이 추가되었습니다.
+	//   · Principal principal : 지금 로그인한 사용자 정보입니다. 스프링 시큐리티가 자동으로 넣어 줍니다. (v3.08 추가)
 	public String createAnswer(Model model, @PathVariable("id") Integer id, @Valid AnswerForm answerForm,
-			// BindingResult : 위 AnswerForm 검사 결과 보관함입니다. 이 값으로 저장할지 말지 정합니다.
-			BindingResult bindingResult) {
-		// 질문 번호로 질문을 찾습니다. (검사 실패 시에도 상세 화면을 다시 그리려면 질문이 필요합니다)
+			// BindingResult : 입력 검사 결과 보관함입니다.
+			BindingResult bindingResult, Principal principal) {
+		// 질문 번호로 질문 객체를 찾습니다.
 		Question question = this.questionService.getQuestion(id);
-		// ─ 검사 실패 분기 ─
-		// hasErrors() 는 오류가 하나라도 있으면 true 입니다. 이때는 저장하지 않습니다.
+		// ─ 작성자 찾기 (v3.08 추가) ─
+		// principal.getName() : 로그인한 아이디 문자열입니다. 그 아이디로 회원 객체(SiteUser)를 찾습니다.
+		// 로그인 정보는 화면이 아니라 시큐리티가 가지고 있어서, Principal 을 통해 받습니다.
+		SiteUser siteUser = this.userService.getUser(principal.getName());
+		// 입력 오류가 있으면 저장하지 않고 상세 화면을 다시 보여 줍니다.
 		if (bindingResult.hasErrors()) {
-			// 상세 화면을 다시 그릴 때 질문 정보가 필요하므로 바구니에 다시 담습니다.
+			// 다시 그릴 때 질문 정보가 필요하므로 바구니에 담습니다.
 			model.addAttribute("question", question);
-			// 같은 상세 화면을 다시 그립니다. 입력한 내용과 오류 메시지가 함께 보입니다.
+			// 같은 상세 화면을 다시 그립니다.
 			return "question_detail";
 		}
-		// 검사를 통과하면 폼 객체에서 content 를 꺼내 저장을 맡깁니다. (v2.16 변경: 폼 객체에서 꺼냄)
-		this.answerService.create(question, answerForm.getContent());
-		// 저장 후 상세 화면으로 이동합니다. (redirect 는 새로고침 시 중복 저장을 막습니다)
+		// ─ 저장 (v3.08 변경) ─
+		// 내용과 작성자를 함께 서비스에 맡깁니다. 이제 답변에는 누가 썼는지도 기록됩니다.
+		this.answerService.create(question, answerForm.getContent(), siteUser);
+		// 저장 후 상세 화면으로 이동합니다.
 		return String.format("redirect:/question/detail/%s", id);
 	}
 }

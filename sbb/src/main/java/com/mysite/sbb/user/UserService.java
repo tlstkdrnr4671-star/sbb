@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════
-// [UserService = 회원 업무 담당] (v3.06 추가)
+// [UserService = 회원 업무 담당] (v3.06 추가, v3.08 갱신: 아이디로 회원 찾기)
 // ══════════════════════════════════════════════════════════════════════
 //
 // 회원을 저장할 때 지켜야 할 규칙을 모아 둔 클래스입니다. 대표 규칙은 "비밀번호는 반드시 암호화해서 저장"입니다.
@@ -8,10 +8,16 @@
 // 회원 관련 클래스가 모인 폴더 주소입니다.
 package com.mysite.sbb.user;
 
+// [Optional] 아이디로 찾은 회원이 없을 수도 있으므로 상자(Optional)에 담아 다룹니다. (v3.08 추가)
+import java.util.Optional;
+
 // [PasswordEncoder] 비밀번호 암호화 도구의 규격(인터페이스)입니다. 실제 구현은 SecurityConfig 에서 등록합니다.
 import org.springframework.security.crypto.password.PasswordEncoder;
 // [@Service] 업무 처리 담당 부품이라는 표시 꼬리표입니다.
 import org.springframework.stereotype.Service;
+
+// [DataNotFoundException] 회원을 찾지 못했을 때 던지는 '데이터 없음' 예외 클래스입니다. (v3.08 추가)
+import com.mysite.sbb.DataNotFoundException;
 
 // [Lombok] 생성자 자동 생성 꼬리표를 가져옵니다.
 import lombok.RequiredArgsConstructor;
@@ -50,5 +56,21 @@ public class UserService {
 		this.userRepository.save(user);
 		// 저장된 회원 객체를 돌려줍니다.
 		return user;
+	}
+
+	// ─ getUser(아이디) : 아이디로 회원 찾기 (v3.08 추가) ─
+	//   · 로그인한 아이디(principal.getName())로 회원 객체를 찾을 때 씁니다.
+	//   · 찾으면 회원 객체를, 없으면 DataNotFoundException 을 던집니다.
+	public SiteUser getUser(String username) {
+		// findByusername : 아이디가 같은 회원을 찾습니다. 결과는 Optional 상자입니다.
+		Optional<SiteUser> siteUser = this.userRepository.findByusername(username);
+		// isPresent() : 상자 안에 회원이 있으면 true 입니다.
+		if (siteUser.isPresent()) {
+			// get() : 상자에서 회원 객체를 꺼내 돌려줍니다.
+			return siteUser.get();
+		} else {
+			// 회원이 없으면 "데이터 없음" 예외를 던집니다.
+			throw new DataNotFoundException("siteuser not found");
+		}
 	}
 }

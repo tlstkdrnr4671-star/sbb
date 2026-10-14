@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 // [AuthenticationConfiguration] 스프링이 미리 조립해 둔 인증 설정을 가져오는 도구입니다. (v3.07 추가)
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+// [EnableMethodSecurity] 메서드 단위 권한 검사(@PreAuthorize)를 켜는 꼬리표를 가져옵니다. (v3.08 추가)
+//   · 지금까지는 "주소" 단위로만 막았습니다. 이제는 "메서드 실행 직전"에도 검사할 수 있습니다.
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 // [BCryptPasswordEncoder] BCrypt 알고리즘으로 비밀번호를 해시하는 구현체입니다. (v3.06 추가)
@@ -18,6 +21,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+// ─ 메서드 보안 켜기 (v3.08 추가) ─
+// prePostEnabled = true : @PreAuthorize("isAuthenticated()") 같은 검사를 메서드 실행 전에 적용합니다.
+//   · 로그인하지 않은 사람이 그 메서드를 부르면, 메서드 안의 코드는 한 줄도 실행되지 않고 막힙니다.
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

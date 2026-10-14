@@ -58,7 +58,9 @@ class SbbApplicationTests {
             // ─ 저장 ─
             // 서비스의 create 로 질문 한 개를 저장합니다. 반복할 때마다 질문이 한 개씩 쌓여 300개가 됩니다.
             // this. 는 이 테스트 객체의 questionService 필드를 가리킵니다.
-            this.questionService.create(subject, content);
+            // ─ 작성자 없이 저장 (v3.08 변경) ─
+            // create 의 세 번째 값 null 은 "작성자 없음"이라는 뜻입니다. 테스트 데이터는 로그인한 사람이 없으므로 비워 둡니다.
+            this.questionService.create(subject, content, null);
         }
     }
 }

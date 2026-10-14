@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 
 // [다른 패키지의 클래스 가져오기] 답변은 질문(Question)에 달리므로, question 패키지의 Question 을 가져와야 합니다.
 import com.mysite.sbb.question.Question;
+// [SiteUser] 답변을 쓴 회원의 타입입니다. 작성자를 연결하기 위해 user 폴더에서 가져옵니다. (v3.08 추가)
+import com.mysite.sbb.user.SiteUser;
 
 // [jakarta.persistence] JPA 꼬리표들이 모인 패키지입니다.
 // 예전 교재에는 javax.persistence 로 나오지만, 스프링 부트 3 부터는 jakarta.persistence 를 씁니다.
@@ -77,4 +79,12 @@ public class Answer {
 	// 이 답변이 달린 질문 객체입니다.
 	// 자바에서는 "객체"로 연결되고, DB 에서는 question_id 번호로 연결됩니다. 이 변환을 JPA 가 해 줍니다.
 	private Question question;
+	
+	// ─ 작성자 관계 (v3.08 추가) ─
+	// 한 명의 회원이 여러 답변을 쓸 수 있으므로 "답변 여러 개 : 회원 한 명" 관계입니다. (질문의 question 과 같은 방식)
+	// 답변 표에 author_id 열이 생기고, 여기에 회원 번호가 저장됩니다.
+	@ManyToOne
+    // [author] 이 답변을 쓴 회원 객체입니다. 화면에서 answer.author.username 으로 작성자 이름을 꺼냅니다.
+    // 자바에서는 객체로, DB 에서는 author_id 번호로 연결됩니다.
+    private SiteUser author;
 }

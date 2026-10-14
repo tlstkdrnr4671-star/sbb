@@ -14,6 +14,8 @@ import java.util.List;
 
 // [다른 패키지의 클래스 가져오기] 질문은 답변(Answer) 목록을 가지므로 answer 패키지의 Answer 를 가져옵니다.
 import com.mysite.sbb.answer.Answer;
+// [SiteUser] 질문을 쓴 회원의 타입입니다. user 폴더에서 가져옵니다. (v3.08 추가)
+import com.mysite.sbb.user.SiteUser;
 
 // CascadeType : "부모(질문)에 작업을 하면 자식(답변)에도 같은 작업을 적용할지" 정하는 선택지 목록입니다.
 import jakarta.persistence.CascadeType;
@@ -22,6 +24,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+// [ManyToOne] "질문 여러 개 : 회원 한 명" 관계를 나타내는 꼬리표입니다. (v3.08 추가)
+import jakarta.persistence.ManyToOne;
 // OneToMany : "질문 한 개(One) : 답변 여러 개(Many)" 관계를 나타내는 꼬리표입니다.
 import jakarta.persistence.OneToMany;
 
@@ -65,4 +69,11 @@ public class Question {
 	// 이 질문에 달린 답변들의 목록입니다. DB 에 목록이 따로 저장되지 않고,
 	// 답변 표의 question_id 값을 보고 JPA 가 필요한 답변들을 찾아옵니다.
 	private List<Answer> answerList;
+	
+	// ─ 질문의 작성자 관계 (v3.08 추가) ─
+	// 한 회원이 여러 질문을 쓸 수 있으므로 "질문 여러 개 : 회원 한 명" 관계입니다.
+	// 질문 표에 author_id 열이 생기고, 여기에 회원 번호가 저장됩니다.
+	@ManyToOne
+    // [author] 이 질문을 쓴 회원 객체입니다. 화면에서 question.author.username 으로 작성자 이름을 꺼냅니다.
+    private SiteUser author;
 }
