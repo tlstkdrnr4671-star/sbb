@@ -15,8 +15,13 @@
 	<div class="card my-3">
 		<!--/* [card-body] 카드 안쪽 본문 영역입니다.                                                        */-->
 		<div class="card-body">
-			<!--/* [card-text] 질문 내용 글자 영역입니다. pre-line 은 줄바꿈을 그대로 살리는 인라인 스타일입니다.         */-->
-			<div class="card-text" style="white-space: pre-line;" th:text="${question.content}"></div>
+			<!--/* [card-text] 질문 내용 글자 영역입니다.         */-->
+			<!--/* ─ 마크다운으로 표시 (v3.12 변경) ─ */-->
+			<!--/* [th:utext] th:text 와 달리 글 속의 HTML 태그를 "실제 태그"로 해석해서 보여 줍니다. (u = unescaped) */-->
+			<!--/*   · th:text 였다면 <strong> 이 글자 그대로 "<strong>" 으로 보였을 것입니다. */-->
+			<!--/* [${@commonUtil.markdown(question.content)}] CommonUtil 부품의 markdown() 으로 내용을 HTML 로 바꿉니다. */-->
+			<!--/* 마크다운이 줄바꿈을 문단(<p>)으로 처리하므로 이전의 white-space: pre-line 스타일은 지웠습니다. */-->
+			<div class="card-text" th:utext="${@commonUtil.markdown(question.content)}"></div>
 			<!--/* [d-flex justify-content-end] 날짜 상자를 오른쪽 끝으로 밀어 둡니다.                              */-->
 			<div class="d-flex justify-content-end">
 				<!--/* ─ 수정 일시 표시 (v3.09 추가) ─ */-->
@@ -87,7 +92,8 @@
 		<!--/* (답변 카드) 본문 영역입니다.                                                                  */-->
 		<div class="card-body">
 			<!--/* (답변 카드) 답변 내용을 넣습니다.                                                              */-->
-			<div class="card-text" style="white-space: pre-line;" th:text="${answer.content}"></div>
+			<!--/* (답변 카드) 답변 내용도 마크다운 → HTML 로 바꿔 th:utext 로 보여 줍니다. (v3.12 변경) */-->
+			<div class="card-text" th:utext="${@commonUtil.markdown(answer.content)}"></div>
 			<!--/* (답변 카드) 날짜 상자를 오른쪽 끝에 둡니다.                                                      */-->
 			<div class="d-flex justify-content-end">
 				<!--/* (답변 카드) 수정한 적이 있을 때만 수정 일시 라벨을 보여 줍니다. (v3.09 추가) */-->

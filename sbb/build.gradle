@@ -99,6 +99,13 @@ dependencies {
 	// [thymeleaf-extras-springsecurity6] Thymeleaf 화면에서 로그인 정보와 권한을 쓸 수 있게 해 주는 확장입니다.
 	//   · 다음 단계에서 sec:authorize 라는 속성으로, 로그인 여부에 따라 버튼을 보이고 숨기는 데 씁니다.
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+	// ──────────────────────────────────────────────────────────────────────
+	// [commonmark] 마크다운 → HTML 변환 라이브러리 (v3.12 추가)
+	// ──────────────────────────────────────────────────────────────────────
+	//   · 마크다운: "# 제목", "**굵게**", "- 목록" 처럼 간단한 기호로 글 모양을 정하는 문법입니다.
+	//   · 이 라이브러리가 그 글을 <h1>, <strong>, <ul><li> 같은 HTML 로 바꿔 줍니다.
+	//   · 0.21.0 은 버전 번호입니다. 스프링 부트가 관리하지 않는 라이브러리라 버전을 직접 적습니다.
+	implementation 'org.commonmark:commonmark:0.21.0'
 }
 
 // tasks: 빌드 작업 목록입니다. 여기서는 'test'(테스트 실행) 작업의 설정을 바꿉니다.
