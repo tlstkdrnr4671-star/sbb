@@ -1,49 +1,68 @@
 <!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* [question_detail.html] 질문 상세 화면 (v2.12 갱신: 답변 목록 + 답변 입력 폼 추가)            */-->
-<!--/* 열리는 주소: GET /question/detail/{id} → QuestionController.detail(id) → "question_detail"          */-->
-<!--/* 화면에 쓰이는 데이터: model 의 question (질문 한 개)                                            */-->
+<!--/* [question_detail.html] 질문 상세 화면 (v2.14 갱신: 부트스트랩 카드 디자인 적용)                */-->
+<!--/* 구성 순서: 질문 카드 → 답변 개수 → 답변 카드 반복 → 답변 입력 폼                                  */-->
+<!--/* 디자인은 class="..." 속성으로 입힙니다. class 이름은 부트스트랩이 정한 스타일 이름입니다.        */-->
 <!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* [h1] 가장 큰 제목 글씨입니다. 질문 제목을 넣습니다.                                              */-->
-<!--/* [th:text="${question.subject}"] 질문 제목 글자를 채웁니다. (자바: question.getSubject())         */-->
-<!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* [link] 외부 파일(스타일시트)을 이 화면에 연결하는 태그입니다. (v2.13 추가)                   */-->
-<!--/* rel="stylesheet" : 연결하는 파일이 CSS(글자 색, 크기, 여백 같은 디자인 규칙)라는 뜻입니다.      */-->
-<!--/* type="text/css" : 파일 종류를 알려 줍니다. (지금은 대부분 생략해도 동작합니다)                 */-->
-<!--/* th:href="@{/style.css}" : 주소를 Thymeleaf 가 만듭니다. 앞의 / 는 static 폴더(사이트 최상위)를 뜻합니다.  */-->
-<!--/*   → src/main/resources/static/style.css 파일이 브라우저에 전달됩니다.                         */-->
-<!--/* 이 파일은 디자인 규칙을 적어 두는 곳입니다. 지금은 규칙이 조금 들어 있고, 뒤 단계에서 부트스트랩을 씁니다. */-->
-<link rel="stylesheet" type="text/css" th:href="@{/style.css}">
-<h1 th:text="${question.subject}"></h1>
-<!--/* [div] 내용을 담는 블록 영역입니다. 질문 내용을 그대로 넣습니다.                                    */-->
-<!--/* [th:text="${question.content}"] 질문 내용 글자를 채웁니다. (자바: question.getContent())       */-->
-<div th:text="${question.content}"></div>
-<!--/* ─ 답변 개수 안내 (v2.12 추가) ─                                                             */-->
-<!--/* [h5] 조금 작은 제목 글씨입니다. 답변 개수를 알려 줍니다.                                       */-->
-<!--/* [th:text="|...|"] 리터럴 치환: 글자와 ${...} 값을 섞습니다.                                  */-->
-<!--/*   ${#lists.size(question.answerList)} : 이 질문에 달린 답변 목록의 개수입니다.                  */-->
-<!--/*   예) 답변이 2개면 "2개의 답변이 있습니다." 가 됩니다.                                          */-->
-<h5 th:text="|${#lists.size(question.answerList)}개의 답변이 있습니다.|"></h5>
-<!--/* [div] 답변 목록을 감싸는 블록입니다. (v2.12 추가)                                              */-->
-<div>
-    <!--/* [ul] 순서 없는 목록(글머리 기호 목록)입니다. 안에 li 항목을 넣습니다.                            */-->
-    <ul>
-        <!--/* ─ 답변 목록 반복 (v2.12 추가) ─                                                              */-->
-        <!--/* [th:each="answer : ${question.answerList}"] 답변 목록을 한 개씩 꺼내 li 를 답변 개수만큼 만듭니다. */-->
-        <!--/*   question.answerList 는 질문 객체에 연결된 답변들의 목록입니다. (Question 의 @OneToMany 덕분)    */-->
-        <!--/* [th:text="${answer.content}"] 각 항목에 답변 글을 넣습니다.                                  */-->
-        <li th:each="answer : ${question.answerList}" th:text="${answer.content}"></li>
-    </ul>
+<!--/* 부트스트랩 CSS 를 연결합니다. (목록 화면과 같은 방식입니다) 기존 style.css 연결은 이 줄로 바뀌었습니다.   */-->
+<link rel="stylesheet" type="text/css" th:href="@{/bootstrap.min.css}">
+<!--/* [container my-3] 화면 가운데 정렬 박스와 위아래 여백입니다. (목록 화면과 같습니다)                    */-->
+<div class="container my-3">
+    <!--/* 아래는 일반 HTML 주석입니다. 브라우저 화면에는 보이지 않고, 페이지 소스 보기에서만 보입니다.           */-->
+    <!-- 질문 -->
+    <!--/* [h2] 큰 제목 글씨입니다. border-bottom : 아래쪽 가로줄, py-2 : 위아래 안쪽 여백 2 단계입니다.       */-->
+    <!--/* th:text="${question.subject}" : 질문 제목을 넣습니다.                                               */-->
+    <h2 class="border-bottom py-2" th:text="${question.subject}"></h2>
+    <!--/* [card my-3] 부트스트랩의 "카드" 디자인입니다. 테두리와 그림자가 있는 상자처럼 보입니다.              */-->
+    <div class="card my-3">
+        <!--/* [card-body] 카드 안쪽 본문 영역입니다. 여백이 자동으로 들어갑니다.                                  */-->
+        <div class="card-body">
+            <!--/* [card-text] 카드 안의 글 영역입니다.                                                             */-->
+            <!--/* style="white-space: pre-line;" : 이 태그에만 적용되는 인라인 CSS 입니다. 입력할 때 누른 엔터(줄바꿈)를 그대로 살립니다. */-->
+            <!--/* th:text="${question.content}" : 질문 내용을 넣습니다.                                             */-->
+            <div class="card-text" style="white-space: pre-line;" th:text="${question.content}"></div>
+            <!--/* [d-flex justify-content-end] 자식들을 한 줄로 세우고(flex), 오른쪽 끝으로 밀어 줍니다.             */-->
+            <div class="d-flex justify-content-end">
+                <!--/* [badge] 작은 표시 상자(라벨)입니다. bg-light : 밝은 배경, text-dark : 어두운 글자, p-2 : 안쪽 여백 2 단계 */-->
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <!--/* #temporals.format(날짜, 모양) : 날짜를 'yyyy-MM-dd HH:mm' 모양의 글자로 바꿉니다. 예) 2025-01-01 10:30 */-->
+                    <div th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--/* 여기부터 답변 영역입니다. 질문 카드 아래에 답변 개수를 알려 줍니다.                                  */-->
+    <!-- 답변의 갯수 표시 -->
+    <!--/* [h5] 조금 작은 제목입니다. 답변 개수 안내에 씁니다.                                                 */-->
+    <h5 class="border-bottom my-3 py-2" 
+        <!--/* 답변 목록의 개수를 세서 "N개의 답변이 있습니다." 글자를 만듭니다. (#lists 와 |...| 리터럴 치환)         */-->
+        th:text="|${#lists.size(question.answerList)}개의 답변이 있습니다.|"></h5>
+    <!-- 답변 반복 시작 -->
+    <!--/* th:each 가 붙은 카드입니다. 답변 개수만큼 카드가 한 장씩 반복해서 만들어집니다.                       */-->
+    <!--/* answer 는 목록에서 한 개씩 꺼낸 답변 객체의 이름표입니다.                                          */-->
+    <div class="card my-3" th:each="answer : ${question.answerList}">
+        <!--/* (답변 카드) 본문 영역입니다. 질문 카드와 같은 구조입니다.                                          */-->
+        <div class="card-body">
+            <!--/* (답변 카드) 답변 내용을 넣습니다. 줄바꿈도 그대로 보입니다.                                         */-->
+            <div class="card-text" style="white-space: pre-line;" th:text="${answer.content}"></div>
+            <!--/* (답변 카드) 날짜 상자를 오른쪽 끝에 둡니다.                                                        */-->
+            <div class="d-flex justify-content-end">
+                <!--/* (답변 카드) 작성 시각 라벨입니다. 질문 카드와 같은 모양입니다.                                     */-->
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <!--/* (답변 카드) 답변 작성 시각을 같은 모양으로 보여 줍니다.                                             */-->
+                    <div th:text="${#temporals.format(answer.createDate, 'yyyy-MM-dd HH:mm')}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--/* 여기까지가 th:each 로 반복되는 답변 카드 영역입니다.                                              */-->
+    <!-- 답변 반복 끝  -->
+    <!-- 답변 작성 -->
+    <!--/* 답변 입력 폼입니다. class="my-3" 로 위아래 여백만 더했습니다. 주소와 전송 방식(POST)은 앞 단계와 같습니다.  */-->
+    <form th:action="@{|/answer/create/${question.id}|}" method="post" class="my-3">
+        <!--/* [form-control] 입력 칸을 부트스트랩 스타일로 꾸밉니다. rows 가 15 에서 10 으로 줄었습니다.               */-->
+        <!--/* name="content" 는 여전히 컨트롤러의 @RequestParam(value = "content") 과 같아야 합니다.                  */-->
+        <textarea name="content" id="content" rows="10" class="form-control"></textarea>
+        <!--/* [btn btn-primary] 파란색 버튼 디자인입니다. btn 은 버튼 공통 스타일, btn-primary 는 주요 색(파랑)입니다. */-->
+        <input type="submit" value="답변등록" class="btn btn-primary my-2">
+    </form>
 </div>
-<!--/* ─ 답변 입력 폼 (v2.12 추가) ─                                                               */-->
-<!--/* [th:action="@{|/answer/create/${question.id}|}"] 보낼 주소를 만듭니다. 질문 번호가 들어갑니다.    */-->
-<!--/*   예) 질문 3번 화면이면 /answer/create/3 으로 POST 전송합니다.                                  */-->
-<!--/* method="post" : 내용을 묶어서 저장 요청(POST)으로 보냅니다. (GET 과 다릅니다)                    */-->
-<form th:action="@{|/answer/create/${question.id}|}" method="post">
-    <!--/* [textarea] 여러 줄 글을 쓰는 입력 칸입니다. rows="15" 는 보이는 줄 수입니다.                    */-->
-    <!--/* name="content" : 서버로 보낼 때의 이름표입니다. 컨트롤러의 @RequestParam(value = "content") 과 같아야 합니다. */-->
-    <!--/* id="content" : 이 칸을 가리키는 고유 번호표입니다. (나중에 자바스크립트나 라벨에서 찾을 때 씁니다)      */-->
-    <textarea name="content" id="content" rows="15"></textarea>
-    <!--/* [input type="submit"] 누르면 form 의 내용이 th:action 주소로 전송됩니다. 버튼 글자는 value 입니다.  */-->
-    <input type="submit" value="답변등록">
-<!--/* [/form] 입력 폼이 끝나는 닫는 태그입니다.                                                      */-->
-</form>
