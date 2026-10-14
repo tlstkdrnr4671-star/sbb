@@ -31,7 +31,7 @@ public class HelloController {
 	//   http://localhost:8080/hello 에서 localhost:8080 이 뒤의 /hello 가 주소의 경로(path)입니다.
 	@GetMapping("/hello")
 	// [@ResponseBody] 메서드가 돌려주는 값(문자열)을 "화면 템플릿 이름"이 아니라 "응답 내용 그 자체"로 보냅니다.
-	// 지금은 HTML 화면이 없으므로 글자 "Hello World" 를 그대로 보여 주는 용도입니다.
+	// 지금은 HTML 화면이 없으므로 글자 "Hello Spring Boot Board" 를 그대로 보여 주는 용도입니다.
 	@ResponseBody
 	// [메서드] hello() 는 "/hello 요청을 처리하는 실제 작업 함수"입니다.
 	  // public   : 스프링이 외부에서 호출할 수 있어야 하므로 공개합니다.
@@ -40,6 +40,6 @@ public class HelloController {
 	public String hello() {
 		// [return] 메서드의 결과를 돌려줍니다. 이 글자가 브라우저 화면에 그대로 나타납니다.
 		// 문자열은 큰따옴표(" ")로 감쌉니다.
-		return "Hello World";
+		return "Hello Spring Boot Board";
 	}
 }

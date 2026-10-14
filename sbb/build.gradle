@@ -45,6 +45,15 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	// 테스트용 묶음입니다. JUnit(시험 도구), AssertJ(검증 도구) 등이 들어 있습니다.
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	// developmentOnly : 개발할 때만 쓰는 라이브러리라는 뜻입니다. 배포용 실행 파일에는 들어가지 않습니다.
+	// spring-boot-devtools : 소스 코드를 고치면 서버를 자동으로 다시 띄워 주는 "개발 편의 도구"입니다.
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	// [Lombok(롬복)] getter, setter, 생성자처럼 반복되는 자바 코드를 자동으로 만들어 주는 도구입니다.
+	// compileOnly : 컴파일(사람이 쓴 코드를 실행 가능한 형태로 바꾸는 단계)에만 필요하다는 뜻입니다.
+	compileOnly 'org.projectlombok:lombok' 
+    // annotationProcessor : 컴파일할 때 @Getter 같은 롬복 꼬리표를 읽고, 실제 코드를 채워 넣는 "처리기"입니다.
+    // 위 compileOnly 와 이 줄이 함께 있어야 롬복이 제대로 동작합니다.
+    annotationProcessor 'org.projectlombok:lombok'
 }
 
 // tasks: 빌드 작업 목록입니다. 여기서는 'test'(테스트 실행) 작업의 설정을 바꿉니다.
