@@ -29,6 +29,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 // [@GetMapping] GET 요청의 주소와 메서드를 연결하는 꼬리표입니다.
 import org.springframework.web.bind.annotation.GetMapping;
+// [@PathVariable] 주소의 "바뀌는 부분"을 메서드의 매개변수로 꺼내 주는 꼬리표를 가져옵니다. (v2.10 추가)
+import org.springframework.web.bind.annotation.PathVariable;
 
 // [Lombok] @RequiredArgsConstructor 를 쓰기 위해 가져옵니다.
 import lombok.RequiredArgsConstructor;
@@ -64,5 +66,28 @@ public class QuestionController {
 		model.addAttribute("questionList", questionList);
 		// "question_list" → templates/question_list.html 을 그리라는 신호입니다. (앞의 폴더와 뒤의 .html 은 자동으로 붙습니다)
 		return "question_list";
+	}
+
+	// ─ 주소 패턴 (v2.10 추가) ─
+	// [GET /question/detail/{id}] 중괄호 {id} 는 "아무 숫자나 들어갈 수 있는 자리"입니다.
+	//   · /question/detail/1 , /question/detail/2 , /question/detail/57 모두 이 메서드가 처리합니다.
+	//   · value = "..." 은 주소를 적는 이름 있는 속성 방식입니다. 앞 단계의 @GetMapping("/question/list") 와 같은 뜻입니다.
+	@GetMapping(value = "/question/detail/{id}")
+	// ─ detail() 메서드 ─
+	// 질문 상세 화면을 준비합니다. 목록 화면과 달리 "한 개의 질문"만 가져옵니다.
+	//   · @PathVariable("id") Integer id : 주소의 {id} 자리에 적힌 값(예: 3)을 꺼내 정수형 id 변수에 넣습니다.
+	//     주소는 원래 글자(문자열)라서 "3" 이 들어옵니다. 스프링이 Integer 자료형으로 자동 변환해 줍니다.
+	//   · Model model : 화면으로 넘길 바구니입니다. (목록 화면과 같습니다)
+	public String detail(Model model, @PathVariable("id") Integer id) {
+		// ─ 업무 담당에게 한 개 요청 ─
+		//   · getQuestion(id) 는 번호로 질문 한 개를 찾아 돌려줍니다.
+		//   · 질문이 없으면 Service 가 DataNotFoundException 을 던지고, 이 줄 아래는 실행되지 않습니다.
+		//     (그래서 없는 번호로 들어오면 404 화면이 보입니다)
+		Question question = this.questionService.getQuestion(id);
+		// 찾은 질문을 "question" 이라는 이름표로 바구니에 담습니다.
+		// question_detail.html 에서는 ${question.subject} 처럼 같은 이름으로 꺼냅니다.
+		model.addAttribute("question", question);
+		// "question_detail" → templates/question_detail.html 을 그리라는 신호입니다.
+		return "question_detail";
 	}
 }

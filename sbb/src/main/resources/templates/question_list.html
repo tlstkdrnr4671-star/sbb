@@ -24,11 +24,20 @@
         <!--/* ${questionList} : 컨트롤러가 model.addAttribute("questionList", ...) 로 넣은 목록입니다.                   */-->
         <!--/* question : 목록에서 한 개씩 꺼낸 질문 객체의 이름표입니다. 아래 칸에서 question.subject 처럼 씁니다.          */-->
         <!--/* 결과: 이 <tr> 은 질문 개수만큼 복제됩니다. 질문이 3개면 표에 가로줄이 3개 만들어집니다.                    */-->
-        <tr th:each="question : ${questionList}">
-            <!--/* [th:text] 태그 안의 글자를 값으로 바꿔 넣는 속성입니다.                                                 */-->
-            <!--/* ${question.subject} : question 객체의 subject 값을 꺼냅니다.                                            */-->
-            <!--/* 자바 코드로 쓰면 question.getSubject() 를 호출한 결과입니다. (Question 클래스의 @Getter 덕분)              */-->
-            <td th:text="${question.subject}"></td>
+        <!--/* ─ v2.10 변경: 두 번째 이름표 index 추가 ─ */-->
+        <!--/* question, index : 첫 번째 이름(question)은 질문 한 개, 두 번째 이름(index)은 "반복 상태" 객체입니다.     */-->
+        <!--/* index.index 는 0부터 세는 순번, index.count 는 1부터 세는 순번입니다. (지금은 쓰지 않고 준비만 해 둠) */-->
+        <tr th:each="question, index : ${questionList}">
+            <!--/* ─ v2.10 변경: 제목 칸 안에 링크를 넣기 위해 td 를 두 줄로 나눔 ─ */-->
+            <!--/* 제목은 그냥 글자가 아니라 "눌러서 상세 화면으로 가는 링크"가 되어야 하므로, 칸 안에 a 태그를 넣습니다.      */-->
+            <td>
+                <!--/* [th:href="@{|/question/detail/${question.id}|}"]                                                         */-->
+                <!--/*   · @{...} 는 링크 주소를 만드는 표현식입니다. 앞의 / 는 사이트 최상위 주소를 뜻합니다.                   */-->
+                <!--/*   · |...| 는 "리터럴 치환"입니다. 안에 ${question.id} 를 넣어 글자와 값을 섞어 줍니다.              */-->
+                <!--/*   · 질문 번호가 3이면 링크 주소는 /question/detail/3 가 됩니다.                                         */-->
+                <!--/* [th:text="${question.subject}"] 링크에 보이는 글자가 질문 제목입니다.                                  */-->
+                <a th:href="@{|/question/detail/${question.id}|}" th:text="${question.subject}"></a>
+            </td>
             <!--/* ${question.createDate} : question.getCreateDate() 값입니다.                                            */-->
             <!--/* 날짜 객체는 기본 모양으로 글자가 바뀌어 출력됩니다. 보기 좋은 모양(yyyy-MM-dd HH:mm)은 뒤 단계에서 씁니다.   */-->
             <td th:text="${question.createDate}"></td>
