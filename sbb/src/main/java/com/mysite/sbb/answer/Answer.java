@@ -16,6 +16,8 @@ package com.mysite.sbb.answer;
 
 // [LocalDateTime] 날짜와 시간을 함께 담는 자바 자료형입니다. 예) 2024-01-01 12:30:00 (작성 시각 저장용)
 import java.time.LocalDateTime;
+// [Set] 같은 값을 두 번 담지 않는 모음 자료형입니다. 한 사람이 두 번 추천해도 한 번만 기록되게 하려고 씁니다. (v3.10 추가)
+import java.util.Set;
 
 // [다른 패키지의 클래스 가져오기] 답변은 질문(Question)에 달리므로, question 패키지의 Question 을 가져와야 합니다.
 import com.mysite.sbb.question.Question;
@@ -34,6 +36,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 // Id : 이 필드가 "기본키(Primary Key)"라는 표시입니다. 표의 각 줄을 구별하는 고유 번호입니다.
 import jakarta.persistence.Id;
+// [@ManyToMany] "여러 개 : 여러 개" 관계 꼬리표입니다. (v3.10 추가)
+import jakarta.persistence.ManyToMany;
 // ManyToOne : "답변(Many) 여러 개 : 질문(One) 한 개" 관계를 나타내는 꼬리표입니다.
 import jakarta.persistence.ManyToOne;
 // [Lombok] 앞 단계에서 배운 롬복의 꼬리표입니다. 아래 @Getter 를 쓰기 위해 가져옵니다.
@@ -92,4 +96,13 @@ public class Answer {
 	// 답변을 마지막으로 고친 시각입니다. 처음 저장할 때는 비어 있고(null), 수정할 때만 값이 들어갑니다.
 	// DB 의 answer 표에 modify_date 열이 새로 생깁니다. (ddl-auto=update 가 자동으로 열을 추가)
 	private LocalDateTime modifyDate;
+	
+	// ─ 추천인 목록 (v3.10 추가) ─
+	// 한 답변을 여러 회원이 추천할 수 있고, 한 회원도 여러 답변을 추천할 수 있습니다. → 다대다(ManyToMany) 관계
+	// 다대다 관계는 표 두 개만으로 표현할 수 없어서 JPA 가 중간 표(answer_voter)를 자동으로 만듭니다.
+	//   · answer_voter 표 : answer_id 와 voter_id 두 열로 "누가 어떤 답변을 추천했는지" 한 줄씩 기록
+	@ManyToMany
+    // [voter] 이 답변을 추천한 회원들의 모음입니다. Set 이므로 같은 회원이 중복으로 들어가지 않습니다.
+    // 화면에서는 #lists.size(answer.voter) 로 추천 수를 셉니다.
+    Set<SiteUser> voter;
 }

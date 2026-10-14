@@ -88,4 +88,12 @@ public class AnswerService {
 		// delete : DELETE 문이 실행되어 answer 표에서 이 답변 한 줄이 지워집니다.
 		this.answerRepository.delete(answer);
 	}
+
+	// ─ vote(답변, 회원) : 답변 추천 (v3.10 추가) ─
+	public void vote(Answer answer, SiteUser siteUser) {
+		// 추천인 모음(Set)에 회원을 추가합니다. 이미 추천한 회원이면 Set 이 무시하므로 중복 추천이 되지 않습니다.
+		answer.getVoter().add(siteUser);
+		// save 하면 중간 표(answer_voter)에 "이 답변 - 이 회원" 한 줄이 추가됩니다.
+		this.answerRepository.save(answer);
+	}
 }

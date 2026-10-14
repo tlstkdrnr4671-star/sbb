@@ -163,4 +163,20 @@ public class AnswerController {
 		// 삭제 후 질문 상세 화면으로 돌아갑니다. (답변 객체는 메모리에 남아 있어서 질문 번호를 꺼낼 수 있습니다)
 		return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
 	}
+
+	// ══ 답변 추천 (v3.10 추가) ══
+	// [GET /answer/vote/{id}] 추천 버튼을 누르고 확인하면 실행됩니다. 로그인한 사람만 추천할 수 있습니다.
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/vote/{id}")
+	// 매개변수: 로그인 사용자 정보, 추천할 답변 번호
+	public String answerVote(Principal principal, @PathVariable("id") Integer id) {
+		// 추천할 답변을 꺼냅니다.
+		Answer answer = this.answerService.getAnswer(id);
+		// 추천하는 사람(지금 로그인한 회원)을 꺼냅니다.
+		SiteUser siteUser = this.userService.getUser(principal.getName());
+		// 서비스에 추천 기록을 맡깁니다.
+		this.answerService.vote(answer, siteUser);
+		// 추천 후 질문 상세 화면으로 돌아갑니다. 추천 수가 1 늘어난 것이 보입니다.
+		return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
+	}
 }

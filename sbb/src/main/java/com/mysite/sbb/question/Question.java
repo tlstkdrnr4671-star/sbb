@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 // [List] 여러 개의 객체를 순서대로 담는 자바 목록(컬렉션)입니다. 여기서는 답변 여러 개를 담습니다.
 // List<Answer> 의 <Answer> 는 "목록 안에 담을 객체 종류"를 뜻하는 제네릭 표기입니다.
 import java.util.List;
+// [Set] 중복 없는 모음 자료형입니다. 추천인 목록에 씁니다. (v3.10 추가)
+import java.util.Set;
 
 // [다른 패키지의 클래스 가져오기] 질문은 답변(Answer) 목록을 가지므로 answer 패키지의 Answer 를 가져옵니다.
 import com.mysite.sbb.answer.Answer;
@@ -24,6 +26,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+// [@ManyToMany] 다대다 관계 꼬리표입니다. (v3.10 추가)
+import jakarta.persistence.ManyToMany;
 // [ManyToOne] "질문 여러 개 : 회원 한 명" 관계를 나타내는 꼬리표입니다. (v3.08 추가)
 import jakarta.persistence.ManyToOne;
 // OneToMany : "질문 한 개(One) : 답변 여러 개(Many)" 관계를 나타내는 꼬리표입니다.
@@ -80,4 +84,10 @@ public class Question {
 	// 질문을 마지막으로 고친 시각입니다. 한 번도 고치지 않았으면 null 입니다.
 	// 화면에서는 이 값이 있을 때만 "modified at" 표시를 보여 줍니다.
 	private LocalDateTime modifyDate;
+	
+	// ─ 추천인 목록 (v3.10 추가) ─
+	// 질문 여러 개 : 회원 여러 명 관계입니다. JPA 가 중간 표 question_voter 를 만들어 관리합니다.
+	@ManyToMany
+    // [voter] 이 질문을 추천한 회원들입니다. 추천 수 = voter 의 개수입니다.
+    Set<SiteUser> voter;
 }

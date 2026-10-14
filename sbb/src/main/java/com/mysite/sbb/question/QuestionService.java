@@ -122,4 +122,12 @@ public class QuestionService {
 		// 질문을 지웁니다. Question.answerList 의 cascade = REMOVE 설정 덕분에 달린 답변들도 함께 지워집니다.
 		this.questionRepository.delete(question);
 	}
+
+	// ─ vote(질문, 회원) : 질문 추천 (v3.10 추가) ─
+	public void vote(Question question, SiteUser siteUser) {
+		// 추천인 모음에 회원을 추가합니다. Set 이라서 같은 회원은 한 번만 들어갑니다.
+		question.getVoter().add(siteUser);
+		// 저장하면 중간 표(question_voter)에 기록됩니다.
+		this.questionRepository.save(question);
+	}
 }

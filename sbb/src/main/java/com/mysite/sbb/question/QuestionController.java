@@ -181,4 +181,20 @@ public class QuestionController {
 		// 삭제 후 첫 화면("/")으로 이동합니다. MainController 가 다시 질문 목록으로 보내 줍니다.
 		return "redirect:/";
 	}
+
+	// ══ 질문 추천 (v3.10 추가) ══
+	// [GET /question/vote/{id}] 추천 버튼을 누르고 확인하면 실행됩니다.
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/vote/{id}")
+	// 매개변수: 로그인 사용자 정보, 추천할 질문 번호
+	public String questionVote(Principal principal, @PathVariable("id") Integer id) {
+		// 추천할 질문을 꺼냅니다.
+		Question question = this.questionService.getQuestion(id);
+		// 추천하는 회원을 꺼냅니다.
+		SiteUser siteUser = this.userService.getUser(principal.getName());
+		// 추천을 기록합니다.
+		this.questionService.vote(question, siteUser);
+		// 추천 후 같은 질문 상세 화면으로 돌아갑니다.
+		return String.format("redirect:/question/detail/%s", id);
+	}
 }
