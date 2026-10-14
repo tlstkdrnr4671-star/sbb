@@ -32,6 +32,12 @@
 					<!--/* 로그인 기능은 보안 단계에서 연결합니다.                                                        */-->
 					<a class="nav-link" href="#">로그인</a>
 				</li>
+				<li class="nav-item">
+					<!--/* ─ 회원가입 메뉴 (v3.06 추가) ─                                                               */-->
+					<!--/* [th:href="@{/user/signup}"] 회원가입 화면(GET /user/signup)으로 가는 링크입니다.                */-->
+					<!--/* 로그인 여부와 상관없이 항상 보입니다.                                                      */-->
+					<a class="nav-link" th:href="@{/user/signup}">회원가입</a>
+				</li>
 			</ul>
 		</div>
 	</div>
