@@ -90,6 +90,15 @@ dependencies {
 	//   · 예) "제목은 비우면 안 됨", "제목은 200글자 이하" 같은 규칙을 @NotEmpty, @Size 로 적을 수 있습니다.
 	//   · 검사 규칙을 쓰려면 이 라이브러리가 있어야 하므로 build.gradle 에 추가합니다.
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// ──────────────────────────────────────────────────────────────────────
+	// [spring-boot-starter-security] Spring Security 묶음 (v3.05 추가)
+	// ──────────────────────────────────────────────────────────────────────
+	//   · 로그인, 권한 검사, CSRF 보호 같은 보안 기능을 한꺼번에 가져옵니다.
+	//   · 이 라이브러리가 들어오면 모든 요청이 "보안 검문소"(필터 체인)를 거치게 됩니다.
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// [thymeleaf-extras-springsecurity6] Thymeleaf 화면에서 로그인 정보와 권한을 쓸 수 있게 해 주는 확장입니다.
+	//   · 다음 단계에서 sec:authorize 라는 속성으로, 로그인 여부에 따라 버튼을 보이고 숨기는 데 씁니다.
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 }
 
 // tasks: 빌드 작업 목록입니다. 여기서는 'test'(테스트 실행) 작업의 설정을 바꿉니다.
