@@ -3,8 +3,8 @@
 // 우리가 쓰는 것은 "규격서(인터페이스)"뿐이고, 실제 구현 코드는 스프링 데이터 JPA 가 자동으로 만들어 줍니다.
 // 그래서 이 파일 안에는 SQL 도, 저장 코드도 전혀 없습니다. 그래도 기능이 동작합니다.
 // ============================================================
-// 같은 패키지에 있어야 @SpringBootApplication 의 @ComponentScan / JPA 자동 탐색이 이 저장소를 찾습니다.
-package com.mysite.sbb;
+// com.mysite.sbb 아래의 answer 패키지에 있습니다. 스프링은 com.mysite.sbb 하위 패키지까지 탐색하므로 이 저장소를 찾을 수 있습니다.
+package com.mysite.sbb.answer;
 
 // [JpaRepository] 스프링이 미리 만들어 둔 "기본 저장소 규격"입니다.
 // save(저장), findById(번호로 찾기), findAll(전체 조회), delete(삭제) 같은 기능이 이미 들어 있습니다.

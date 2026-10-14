@@ -25,6 +25,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 // [Transactional] 메서드 안의 DB 작업을 "한 묶음(트랜잭션)"으로 처리하는 꼬리표입니다.
 import org.springframework.transaction.annotation.Transactional;
 
+// [다른 패키지의 클래스 가져오기] 테스트는 answer, question 패키지의 클래스를 사용하므로 import 로 가져옵니다.
+import com.mysite.sbb.answer.Answer;
+import com.mysite.sbb.question.Question;
+import com.mysite.sbb.question.QuestionRepository;
+
 // 이 꼬리표를 붙이면 테스트 실행 시 스프링 부트 전체(부품, 설정 등)를 실제로 시작합니다.
 // 즉 "우리 앱이 실제로 뜨는가?"를 확인하게 됩니다.
 @SpringBootTest

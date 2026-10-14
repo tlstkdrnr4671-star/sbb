@@ -11,11 +11,14 @@
 //
 // [관계] 답변은 질문에 달립니다. 그래서 답변 한 개는 질문 한 개를 가리킵니다. (아래 @ManyToOne 참고)
 // ============================================================
-// 이 엔티티도 com.mysite.sbb 패키지에 있어야 @SpringBootApplication 이 찾아서 JPA 대상으로 등록합니다.
-package com.mysite.sbb;
+// 이 엔티티는 com.mysite.sbb.answer 패키지(answer 폴더)에 있습니다. 스프링은 com.mysite.sbb 아래의 모든 하위 패키지를 탐색하므로 JPA 대상으로 찾아 등록합니다.
+package com.mysite.sbb.answer;
 
 // [LocalDateTime] 날짜와 시간을 함께 담는 자바 자료형입니다. 예) 2024-01-01 12:30:00 (작성 시각 저장용)
 import java.time.LocalDateTime;
+
+// [다른 패키지의 클래스 가져오기] 답변은 질문(Question)에 달리므로, question 패키지의 Question 을 가져와야 합니다.
+import com.mysite.sbb.question.Question;
 
 // [jakarta.persistence] JPA 꼬리표들이 모인 패키지입니다.
 // 예전 교재에는 javax.persistence 로 나오지만, 스프링 부트 3 부터는 jakarta.persistence 를 씁니다.

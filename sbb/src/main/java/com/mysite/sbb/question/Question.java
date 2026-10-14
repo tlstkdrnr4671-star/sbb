@@ -3,14 +3,17 @@
 // 질문 한 개는 답변을 여러 개 가질 수 있습니다. (질문 : 답변 = 1 : N)
 // Answer.java 와 짝을 이루므로 두 파일을 함께 보면 이해가 빠릅니다.
 // ============================================================
-// Answer 와 같은 패키지에 있으므로 서로를 import 없이 부를 수 있습니다.
-package com.mysite.sbb;
+// Answer 는 다른 패키지(answer)에 있으므로, 아래에서 import 로 가져옵니다.
+package com.mysite.sbb.question;
 
 // [LocalDateTime] 날짜와 시간 자료형입니다. 질문 작성 시각을 담습니다.
 import java.time.LocalDateTime;
 // [List] 여러 개의 객체를 순서대로 담는 자바 목록(컬렉션)입니다. 여기서는 답변 여러 개를 담습니다.
 // List<Answer> 의 <Answer> 는 "목록 안에 담을 객체 종류"를 뜻하는 제네릭 표기입니다.
 import java.util.List;
+
+// [다른 패키지의 클래스 가져오기] 질문은 답변(Answer) 목록을 가지므로 answer 패키지의 Answer 를 가져옵니다.
+import com.mysite.sbb.answer.Answer;
 
 // CascadeType : "부모(질문)에 작업을 하면 자식(답변)에도 같은 작업을 적용할지" 정하는 선택지 목록입니다.
 import jakarta.persistence.CascadeType;

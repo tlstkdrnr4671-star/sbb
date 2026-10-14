@@ -3,7 +3,7 @@
 // AnswerRepository 와 같은 구조이고, 아래에는 "메서드 이름으로 검색하는 법"이 추가로 있습니다.
 // ============================================================
 // Question 엔티티와 같은 패키지에 있습니다.
-package com.mysite.sbb;
+package com.mysite.sbb.question;
 
 // [List] 여러 개의 결과를 담을 목록 자료형입니다. 아래 findBySubjectLike 의 반환형으로 쓰입니다.
 import java.util.List;
