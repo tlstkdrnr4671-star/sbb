@@ -47,7 +47,14 @@ import com.mysite.sbb.user.UserService;
 import jakarta.validation.Valid;
 // [Lombok] 생성자 자동 생성 꼬리표를 가져옵니다.
 import lombok.RequiredArgsConstructor;
+// [@Slf4j] Lombok 이 로그 기록 도구(log 변수)를 자동으로 만들어 주는 꼬리표입니다. (v4.09 추가)
+//   · SLF4J : 자바의 표준 로그 창구. 실제 기록은 스프링 부트에 들어 있는 Logback 이 합니다.
+import lombok.extern.slf4j.Slf4j;
 
+// ─ 로그 도구 준비 (v4.09 추가) ─
+// 이 꼬리표 덕분에 클래스 안에서 log.info(...) 처럼 바로 쓸 수 있습니다.
+// Lombok 이 대신 만들어 주는 코드: private static final Logger log = LoggerFactory.getLogger(QuestionController.class);
+@Slf4j
 // 이 클래스의 모든 주소 앞에 /question 을 붙입니다.
 @RequestMapping("/question")
 // final 필드들을 받는 생성자를 자동으로 만듭니다. (생성자 주입, DI)
@@ -71,6 +78,12 @@ public class QuestionController {
 			//   · 예) /question/list?page=0&kw=스프링  → page=0, kw="스프링"
 			//   · 빈 글자로 검색하면 like '%%' 가 되어 모든 질문이 나옵니다. 그래서 검색 전 화면과 같습니다.
 			@RequestParam(value = "kw", defaultValue = "") String kw) {
+		// ─ 로그 한 줄 기록 (v4.09 추가) ─
+		// 목록 요청이 올 때마다 몇 페이지를, 어떤 검색어로 찾았는지 기록합니다.
+		//   · {} 자리에 뒤의 값이 순서대로 들어갑니다. 예) page:2, kw:스프링
+		//   · info 는 로그 등급입니다. (낮은 순) trace < debug < info < warn < error
+		// System.out.println 과 달리 시각, 등급, 클래스 이름이 함께 찍히고, 파일로도 남길 수 있습니다.
+		log.info("page:{}, kw:{}", page, kw);
 		// 서비스에게 그 페이지의 질문들을 요청합니다.
 		Page<Question> paging = this.questionService.getList(page, kw);
 		// 페이지 상자를 "paging" 이름표로 담습니다.
