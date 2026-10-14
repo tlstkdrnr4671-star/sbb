@@ -14,6 +14,8 @@
 package com.mysite.sbb.question;
 
 // [List] 질문 목록을 돌려줄 때 쓰는 자료형입니다.
+// [LocalDateTime] 지금 이 순간의 날짜와 시각입니다. 질문을 만들 때 작성 시각으로 씁니다. (v2.16 추가)
+import java.time.LocalDateTime;
 import java.util.List;
 // [Optional] "값이 있을 수도, 없을 수도 있는" 결과를 담는 상자입니다. (v2.10 추가)
 //   findById 는 찾은 질문이 있으면 상자에 넣고, 없으면 빈 상자를 돌려줍니다.
@@ -82,5 +84,22 @@ public class QuestionService {
 			// 이 신호는 Controller → Spring → 404 응답 순서로 전달됩니다. (DataNotFoundException 설명 참고)
 			throw new DataNotFoundException("question not found");
 		}
+	}
+
+	// ─ create(제목, 내용) : 질문 저장 (v2.16 추가) ─
+	// 질문 등록 폼에서 받은 값을 받아 새 질문으로 저장합니다. 돌려줄 값이 없어서 반환형은 void 입니다.
+	public void create(String subject, String content) {
+		// 빈 질문 객체를 만듭니다. 아직 DB 에는 없습니다.
+		Question q = new Question();
+		// 제목을 채웁니다. (Question 의 @Setter 가 만든 메서드)
+		q.setSubject(subject);
+		// 내용을 채웁니다.
+		q.setContent(content);
+		// 지금 시각을 작성 시각으로 기록합니다.
+		q.setCreateDate(LocalDateTime.now());
+		// save : 새 객체이므로 INSERT 가 실행되어 question 표에 한 줄이 추가됩니다.
+		//   · 대략 아래 SQL 이 실행됩니다. (자동 증가 번호 id 는 DB 가 붙입니다)
+		//       insert into question (content, create_date, subject, id) values (?, ?, ?, default)
+		this.questionRepository.save(q);
 	}
 }

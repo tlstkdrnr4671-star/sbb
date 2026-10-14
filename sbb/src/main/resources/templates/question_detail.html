@@ -52,9 +52,16 @@
 	<!-- 답변 반복 끝  -->
 	<!-- 답변 작성 -->
 	<!--/* 답변 입력 폼입니다. 주소 /answer/create/{질문번호} 로 POST 전송합니다.                              */-->
-	<form th:action="@{|/answer/create/${question.id}|}" method="post" class="my-3">
+	<!--/* [th:object="${answerForm}"] (v2.16 추가) 이 폼은 AnswerForm 객체와 연결됩니다.                  */-->
+	<!--/* 아래 th:field 의 *{...} 가 이 객체의 필드(content)를 가리킵니다.                                */-->
+	<form th:action="@{|/answer/create/${question.id}|}" th:object="${answerForm}" method="post" class="my-3">
 		<!--/* [textarea] 답변 입력 칸입니다. name="content" 로 컨트롤러의 @RequestParam 과 연결됩니다.           */-->
-		<textarea name="content" id="content" rows="10" class="form-control"></textarea>
+		<!--/* [th:replace] (v2.16 추가) 오류 메시지 조각(form_errors.html)을 끼워 넣습니다.                    */-->
+		<!--/* 답변 내용을 비우고 등록하면 여기에 빨간 경고가 나타납니다.                                    */-->
+		<div th:replace="~{form_errors :: formErrorsFragment}"></div>
+		<!--/* [th:field="*{content}"] (v2.16 변경) name, id 를 자동으로 만들고 AnswerForm.content 와 연결합니다.  */-->
+		<!--/* 이전 버전의 name="content" 직접 적기는 이제 필요 없습니다. 검사에 실패하면 입력한 글도 되살아납니다. */-->
+		<textarea th:field="*{content}" rows="10" class="form-control"></textarea>
 		<!--/* 답변등록 버튼입니다. 누르면 입력한 답변이 전송됩니다.                                              */-->
 		<input type="submit" value="답변등록" class="btn btn-primary my-2">
 	</form>

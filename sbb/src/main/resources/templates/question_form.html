@@ -1,0 +1,42 @@
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* [question_form.html] 질문 등록 화면 = 입력 폼 (v2.16 추가)                     */-->
+<!--/* 제목과 내용을 쓰고 "저장하기"를 누르면 POST 로 /question/create 에 전송됩니다.  */-->
+<!--/* 입력 칸은 th:field 로 QuestionForm 과 연결되고, 오류는 form_errors.html 조각으로 보여 줍니다. */-->
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* 공통 틀(layout.html)을 입는 선언입니다.                                               */-->
+<html layout:decorate="~{layout}">
+<!--/* 틀의 content 구멍에 들어갈 내용입니다.                                                  */-->
+<div layout:fragment="content" class="container">
+	<!--/* 화면 제목입니다. (h5 는 작은 제목 글씨 크기입니다)                                       */-->
+	<h5 class="my-3 border-bottom pb-2">질문등록</h5>
+	<!--/* ─ 폼 시작 ─                                                                       */-->
+	<!--/* [th:action="@{/question/create}"] 전송 주소는 /question/create 입니다.                      */-->
+	<!--/* [th:object="${questionForm}"] 이 폼은 컨트롤러가 넘긴 QuestionForm 객체와 연결됩니다.          */-->
+	<!--/* method="post" : 내용을 묶어서 저장 요청으로 보냅니다.                                        */-->
+	<form th:action="@{/question/create}" th:object="${questionForm}" method="post">
+		<!--/* 오류 메시지 조각(form_errors.html)을 이 자리에 끼워 넣습니다. 검사에 실패하면 빨간 경고가 보입니다. */-->
+		<div th:replace="~{form_errors :: formErrorsFragment}"></div>
+		<!--/* 제목 입력 한 줄입니다. mb-3 은 아래 여백입니다.                                             */-->
+		<div class="mb-3">
+			<!--/* 제목 칸의 이름표입니다. for="subject" 는 아래 입력 칸 id 와 연결됩니다.                         */-->
+			<label for="subject" class="form-label">제목</label>
+			<!--/* [th:field="*{subject}"] 입력 칸을 QuestionForm.subject 와 연결합니다.                       */-->
+			<!--/*   · *{...} : 선택 변수 식입니다. th:object 로 고른 객체(questionForm)의 필드를 뜻합니다.            */-->
+			<!--/*   · th:field 는 name, id, value 를 자동으로 채웁니다. 검사 실패 시 입력했던 값도 되살려 줍니다.     */-->
+			<input type="text" th:field="*{subject}" class="form-control">
+		</div>
+		<!--/* 내용 입력 한 줄입니다.                                                                    */-->
+		<div class="mb-3">
+			<!--/* 내용 칸의 이름표입니다.                                                                    */-->
+			<label for="content" class="form-label">내용</label>
+			<!--/* [th:field="*{content}"] 여러 줄 입력 칸을 QuestionForm.content 와 연결합니다.                 */-->
+			<!--/* rows="10" : 입력 칸의 기본 높이를 10줄로 둡니다.                                           */-->
+			<textarea th:field="*{content}" class="form-control" rows="10"></textarea>
+		</div>
+		<!--/* 저장 버튼입니다. 누르면 폼이 전송되어 컨트롤러의 @PostMapping("/create") 가 받습니다.           */-->
+		<input type="submit" value="저장하기" class="btn btn-primary my-2">
+	<!--/* [/form] 입력 폼이 끝납니다.                                                                */-->
+	</form>
+</div>
+
+</html>
