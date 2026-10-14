@@ -1,50 +1,48 @@
 <!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* [question_list.html] 질문 목록 화면 (v2.14 갱신: 부트스트랩 디자인 적용)                */-->
-<!--/* 열리는 주소: GET /question/list → QuestionController.list() → "question_list" → 이 파일  */-->
-<!--/* 디자인은 class="..." 속성으로 입힙니다. 이 class 이름들은 부트스트랩(Bootstrap)이 미리 정해 둔 것입니다. */-->
+<!--/* [question_list.html] 질문 목록 화면 (v2.15 갱신: 공통 틀 layout.html 을 입음)          */-->
+<!--/* 이제 이 파일은 HTML 전체가 아니라 "내용 조각"만 씁니다. 머리와 스타일 연결은 layout.html 이 담당합니다. */-->
 <!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* ─ 부트스트랩 연결 (v2.14 추가) ─                                                          */-->
-<!--/* [link] 부트스트랩 스타일 파일을 연결합니다. 부트스트랩은 class 이름만 붙이면 표, 버튼, 카드가 예쁘게 바뀌는 CSS 모음입니다. */-->
-<!--/* th:href="@{/bootstrap.min.css}" : static 폴더의 bootstrap.min.css 주소를 만들어 줍니다.                  */-->
-<link rel="stylesheet" type="text/css" th:href="@{/bootstrap.min.css}">
-<!--/* [container my-3] container : 화면 가운데에 적당한 폭으로 내용을 모읍니다.                            */-->
-<!--/*   my-3 : 위아래 바깥 여백(margin-y) 3 단계입니다.                                                    */-->
-<!--/* ─ 부트스트랩 여백 규칙 ─                                                                            */-->
-<!--/*   m = margin(바깥 여백), p = padding(안쪽 여백), y = 위아래, 뒤의 숫자(0~5)가 크기입니다.            */-->
-<div class="container my-3">
-    <!--/* [table] 표 태그입니다. class="table" 은 부트스트랩의 깔끔한 표 디자인(간격, 줄무늬)을 적용합니다.       */-->
-    <table class="table">
-        <!--/* [thead] 머리글 영역입니다. class="table-dark" 는 머리글 배경을 어둡게 칠합니다.                        */-->
-        <thead class="table-dark">
-            <!--/* [tr] 머리글의 한 가로줄입니다.                                                                    */-->
-            <tr>
-                <!--/* 번호 칸(v2.14 추가). 번호 값은 아래 loop.count 로 채웁니다.                                          */-->
-                <th>번호</th>
-                <!--/* 제목 칸입니다. 질문 제목이 들어갑니다.                                                              */-->
-                <th>제목</th>
-                <!--/* 작성일시 칸입니다. 질문을 만든 날짜와 시각이 들어갑니다.                                              */-->
-                <th>작성일시</th>
-            </tr>
-        </thead>
-        <!--/* [tbody] 본문 영역입니다. 질문 줄이 여기에서 반복해서 만들어집니다.                                    */-->
-        <tbody>
-            <!--/* ─ 반복 상태 이름 바꾸기 (v2.14 변경) ─                                                          */-->
-            <!--/* 두 번째 이름표가 index 에서 loop 로 바뀌었습니다. 이름은 자유롭게 정할 수 있습니다.                    */-->
-            <!--/* loop.count : 1부터 세는 반복 번호입니다. (loop.index 는 0부터 셉니다)  예) 첫 질문 → 1                */-->
-            <tr th:each="question, loop : ${questionList}">
-                <!--/* [번호 칸] loop.count 값을 글자로 넣습니다. 질문 목록의 1번, 2번 ... 순서가 보입니다.                  */-->
-                <td th:text="${loop.count}"></td>
-                <!--/* [제목 칸] 칸 안에 상세 화면으로 가는 링크를 넣기 위해 td 를 여러 줄로 나눴습니다.                   */-->
-                <td>
-                    <!--/* [th:href="@{|/question/detail/${question.id}|}"] 링크 주소. 질문 번호가 들어갑니다. 예) /question/detail/3 */-->
-                    <!--/* [th:text="${question.subject}"] 링크에 보이는 글자는 질문 제목입니다.                                  */-->
-                    <a th:href="@{|/question/detail/${question.id}|}" th:text="${question.subject}"></a>
-                </td>
-                <!--/* ─ 날짜 모양 지정 (v2.14 변경) ─                                                                 */-->
-                <!--/* #temporals.format(날짜, 모양) : 날짜 객체를 'yyyy-MM-dd HH:mm' 모양의 글자로 바꿉니다. 예) 2025-01-01 10:30 */-->
-                <!--/* #temporals 는 날짜와 시간 전용 유틸리티 객체입니다.                                                    */-->
-                <td th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></td>
-            </tr>
-        </tbody>
-    </table>
+<!--/* ─ 틀 선언 (v2.15 추가) ─                                                                    */-->
+<!--/* [layout:decorate="~{layout}"] "이 화면은 layout.html 이라는 틀을 입겠다"는 선언입니다.                */-->
+<!--/* ~{layout} : layout.html 템플릿을 가리키는 표현식입니다. 확장자 .html 은 생략합니다.                  */-->
+<!--/* 결과: 아래 layout:fragment 내용이 틀의 구멍에 들어가 완성된 HTML 이 됩니다.                       */-->
+<html layout:decorate="~{layout}">
+<!--/* [layout:fragment="content"] 이 div 가 틀(layout.html)의 content 구멍에 들어갑니다.                 */-->
+<!--/* 이름 "content" 는 layout.html 의 구멍 이름과 같아야 짝이 맞습니다.                                */-->
+<!--/* [class="container my-3"] 가운데 정렬 박스와 위아래 여백입니다. (v2.14 부터 같은 디자인)            */-->
+<div layout:fragment="content" class="container my-3">
+	<!--/* [table] 부트스트랩 표 디자인이 적용된 표입니다.                                                */-->
+	<table class="table">
+		<!--/* [thead] 머리글 영역입니다. 배경을 어둡게 칠합니다.                                              */-->
+		<thead class="table-dark">
+			<!--/* [tr] 머리글의 한 가로줄입니다.                                                                */-->
+			<tr>
+				<!--/* 번호 칸의 머리글입니다.                                                                       */-->
+				<th>번호</th>
+				<!--/* 제목 칸의 머리글입니다.                                                                       */-->
+				<th>제목</th>
+				<!--/* 작성일시 칸의 머리글입니다.                                                                   */-->
+				<th>작성일시</th>
+			</tr>
+		</thead>
+		<!--/* [tbody] 본문 영역입니다. 질문 줄이 여기서 반복해서 만들어집니다.                                  */-->
+		<tbody>
+			<!--/* [th:each] 질문 목록을 한 개씩 꺼내 가로줄(tr)을 질문 개수만큼 만듭니다.                            */-->
+			<!--/* question : 현재 질문 한 개, loop : 반복 상태 객체입니다. (loop.count 는 1부터 세는 번호)           */-->
+			<tr th:each="question, loop : ${questionList}">
+				<!--/* [번호 칸] loop.count 값을 글자로 넣습니다. 1번, 2번 ... 순서가 보입니다.                          */-->
+				<td th:text="${loop.count}"></td>
+				<!--/* [제목 칸] 칸 안에 상세 화면으로 가는 링크를 넣습니다.                                            */-->
+				<td>
+					<!--/* [th:href] 링크 주소 (예: /question/detail/3). [th:text] 링크 글자는 질문 제목입니다.             */-->
+					<a th:href="@{|/question/detail/${question.id}|}" th:text="${question.subject}"></a>
+				</td>
+				<!--/* [작성일시 칸] 날짜를 'yyyy-MM-dd HH:mm' 모양으로 출력합니다. (#temporals.format)                  */-->
+				<!--/* 목록 화면은 layout.html 의 구멍 안에서만 보입니다. 머리글과 메뉴는 틀이 그려 줍니다.                */-->
+				<td th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></td>
+			</tr>
+		</tbody>
+	</table>
 </div>
+
+</html>
