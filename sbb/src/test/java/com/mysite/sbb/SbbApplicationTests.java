@@ -1,73 +1,64 @@
-// ============================================================
-// [강의 노트] 테스트 클래스 = "프로그램이 제대로 조립되었는지 검사하는 시험지"입니다.
-// src/test 폴더에 있으며, 실제 서비스 실행과는 별도로 자동 검사를 돌릴 때 쓰입니다.
-// ============================================================
+// ══════════════════════════════════════════════════════════════════════
+// [SbbApplicationTests = 자동 실행 테스트 클래스] (v3.02 갱신: 샘플 질문 300개 만들기)
+// ══════════════════════════════════════════════════════════════════════
+//
+// 테스트(test)란? 프로그램이 제대로 동작하는지 사람이 손으로 확인하지 않고, 코드로 자동 검사하는 것입니다.
+// 이 파일은 src/test/java 아래에 있어서 "실행 프로그램"이 아니라 "시험지" 역할을 합니다.
+//
+// ⚠ 주의 (v3.02 의 이 테스트는 검사가 아니라 "데이터 생성"입니다)
+//   testJpa() 를 실행할 때마다 질문이 300개씩 DB 에 추가됩니다.
+//   테스트를 여러 번 돌리면 같은 제목의 질문이 계속 쌓입니다. 실행 전에 DB 상태를 확인하세요.
+//   (페이징 화면이 잘 나오는지 보려고 샘플 데이터를 만드는 용도입니다)
+// ══════════════════════════════════════════════════════════════════════
+// 테스트 코드도 프로젝트 최상위 패키지 com.mysite.sbb 에 둡니다.
 package com.mysite.sbb;
 
-// [static import] 클래스 이름 없이 Assertions 안의 검사 메서드를 바로 쓰게 해 줍니다.
-// assertEquals(기대값, 실제값) : 두 값이 같은지 검사합니다. 다르면 테스트가 실패합니다.
-import static org.junit.jupiter.api.Assertions.assertEquals;
-// assertTrue(조건) : 조건이 참(true)인지 검사합니다.
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-// [List] 답변 목록을 담을 자료형입니다.
-import java.util.List;
-// [Optional] "값이 있을 수도, 없을 수도 있다"는 상황을 감싸는 상자입니다.
-// 번호로 찾았는데 없을 수도 있으므로, 결과를 상자에 담아 돌려받는 것이 안전합니다.
-import java.util.Optional;
-
-// [JUnit 5] 자바에서 가장 많이 쓰는 "단위 테스트 도구"입니다. @Test 꼬리표를 쓰려고 가져옵니다.
+// [@Test] JUnit 5 의 테스트 표시 꼬리표입니다. 이 꼬리표가 붙은 메서드를 테스트 실행기가 찾아서 실행합니다.
 import org.junit.jupiter.api.Test;
-// [Autowired] "스프링이 만들어 둔 부품(Bean)을 여기에 자동으로 넣어 달라"는 꼬리표입니다.
+// [@Autowired] 스프링이 관리하는 객체를 필드에 "자동으로 넣어 달라"는 꼬리표입니다. (의존성 주입)
 import org.springframework.beans.factory.annotation.Autowired;
-// [SpringBootTest] 테스트할 때 스프링 부트를 실제로 한 번 띄워 보는 도구입니다.
+// [@SpringBootTest] 테스트를 실행할 때 스프링 부트 전체를 실제로 띄우는 꼬리표입니다. (DB 연결까지 포함)
 import org.springframework.boot.test.context.SpringBootTest;
-// [Transactional] 메서드 안의 DB 작업을 "한 묶음(트랜잭션)"으로 처리하는 꼬리표입니다.
-import org.springframework.transaction.annotation.Transactional;
 
-// [다른 패키지의 클래스 가져오기] 테스트는 answer, question 패키지의 클래스를 사용하므로 import 로 가져옵니다.
-import com.mysite.sbb.answer.Answer;
-import com.mysite.sbb.question.Question;
-import com.mysite.sbb.question.QuestionRepository;
+// 질문 저장을 맡길 업무 담당 클래스입니다. 테스트에서도 같은 업무 규칙을 거치게 합니다.
+import com.mysite.sbb.question.QuestionService;
 
-// 이 꼬리표를 붙이면 테스트 실행 시 스프링 부트 전체(부품, 설정 등)를 실제로 시작합니다.
-// 즉 "우리 앱이 실제로 뜨는가?"를 확인하게 됩니다.
+// ─ @SpringBootTest ─
+// 테스트를 실행하면 스프링 컨테이너(부품 보관소)와 H2 DB 연결까지 실제로 준비합니다.
+//   · 장점: 실제 프로그램과 같은 조건에서 확인할 수 있습니다.
+//   · 단점: 실행이 느립니다. 그래서 꼭 필요한 테스트에만 씁니다.
 @SpringBootTest
-// 테스트 클래스 선언입니다. 테스트 클래스는 보통 public 을 붙이지 않아도 됩니다.
+// 테스트 클래스입니다. 테스트 클래스는 보통 public 을 붙이지 않아도 됩니다.
 class SbbApplicationTests {
 
-	// [@Autowired] 의존성 주입(DI)입니다. 우리가 new 로 직접 만들지 않아도, 스프링이 보관하고 있던
-	// QuestionRepository 객체를 아래 필드에 자동으로 넣어 줍니다. "필요한 부품을 밖에서 넣어 준다"는 뜻입니다.
-	@Autowired
-	// 질문 저장소 창구입니다. 이 테스트에서는 여기에서 질문 2번을 찾아옵니다.
-	private QuestionRepository questionRepository;
+    // ─ 의존성 주입 ─
+    // 스프링이 만들어 둔 QuestionService 객체를 아래 필드에 자동으로 넣어 줍니다.
+    // 테스트 코드에서 new QuestionService() 를 직접 쓰지 않아도 되는 이유입니다.
+    @Autowired
+    // 질문 업무 담당입니다. 아래 testJpa 에서 질문을 저장할 때 씁니다.
+    private QuestionService questionService;
 
-	// [@Transactional] 이 테스트 메서드를 하나의 트랜잭션 안에서 실행합니다.
-	// 테스트가 끝나면 DB 의 변경 내용이 자동으로 되돌려져(롤백) 테스트 데이터가 DB 에 남지 않습니다.
-	// 또한 "답변 목록을 나중에 꺼내는(지연 로딩)" 작업도 트랜잭션 안에서만 안전하게 가능합니다.
-	@Transactional
-	// [@Test] 이 메서드 하나가 "테스트 한 개"라는 표시입니다. 실행 도구가 자동으로 찾아서 실행합니다.
-	@Test
-	// [testJpa] JPA 가 DB 와 실제로 잘 대화하는지 검사하는 테스트입니다.
-	// 이 테스트는 DB 에 "질문 2번과 그 답변" 데이터가 이미 들어 있다고 가정합니다.
-	// (강의 중 H2 콘솔에서 직접 넣어 둔 데이터입니다. 데이터가 없으면 테스트는 실패합니다.)
-	void testJpa() {
-		// [findById(2)] 기본키가 2인 질문을 DB 에서 찾아옵니다.  → SELECT ... FROM question WHERE id = 2
-		// 결과는 바로 Question 이 아니라 Optional 상자에 담겨 옵니다. (없을 수도 있으니까요)
-		// this. 는 "이 클래스의 questionRepository 필드"를 가리킵니다.
-		Optional<Question> oq = this.questionRepository.findById(2);
-		// isPresent() : 상자 안에 실제 질문이 들어 있는지 확인합니다. 없으면 여기서 테스트가 실패합니다.
-		assertTrue(oq.isPresent());
-		// get() : 상자를 열어 실제 Question 객체를 꺼냅니다. (확인된 뒤에만 안전하게 꺼낼 수 있습니다)
-		Question q = oq.get();
-
-		// [getAnswerList] 질문 객체에서 답변 목록을 꺼냅니다. 앞 단계의 @OneToMany 관계 덕분에 가능합니다.
-		// JPA 가 answer 표에서 question_id 가 2인 답변들을 찾아 와서 이 목록을 채웁니다.
-		List<Answer> answerList = q.getAnswerList();
-
-		// 답변이 정확히 1개인지 검사합니다. (기대값 1, 실제 목록 크기)
-		assertEquals(1, answerList.size());
-		// 첫 번째 답변(인덱스 0)의 내용이 기대한 문장과 같은지 검사합니다. 자바 목록은 0번부터 셉니다.
-		assertEquals("네 자동으로 생성됩니다.", answerList.get(0).getContent());
-	}
+    // ─ 테스트 메서드 표시 ─
+    // 이 메서드가 테스트 한 개입니다. 실행 도구가 자동으로 찾아서 실행합니다.
+    @Test
+    // testJpa() : 질문 300개를 만드는 샘플 데이터 생성 메서드입니다. (검사 문장은 없습니다)
+    void testJpa() {
+        // ─ 반복문 ─
+        // i 를 1부터 300까지 1씩 늘리며, 중괄호 안의 코드를 300번 실행합니다.
+        //   · i <= 300 : i 가 300 이하인 동안 반복합니다.
+        //   · i++ : 한 바퀴 돌 때마다 i 에 1 을 더합니다.
+        for (int i = 1; i <= 300; i++) {
+            // ─ 제목 만들기 ─
+            // String.format : 글자 틀에 값을 끼워 넣습니다. %03d 는 "정수를 3자리로, 빈자리는 0으로 채워라"라는 뜻입니다.
+            //   · i 가 7 이면 "테스트 데이터입니다:[007]" 이 됩니다.
+            //   · 번호가 항상 3자리로 맞춰져서 목록에서 정렬해 보기 좋습니다.
+            String subject = String.format("테스트 데이터입니다:[%03d]", i);
+            // 모든 샘플 질문의 내용은 같은 글자로 둡니다. (내용은 중요하지 않은 샘플 데이터라서)
+            String content = "내용무";
+            // ─ 저장 ─
+            // 서비스의 create 로 질문 한 개를 저장합니다. 반복할 때마다 질문이 한 개씩 쌓여 300개가 됩니다.
+            // this. 는 이 테스트 객체의 questionService 필드를 가리킵니다.
+            this.questionService.create(subject, content);
+        }
+    }
 }

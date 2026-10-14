@@ -1,51 +1,68 @@
-<!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* [question_list.html] 질문 목록 화면 (v2.15 갱신: 공통 틀 layout.html 을 입음)          */-->
-<!--/* 이제 이 파일은 HTML 전체가 아니라 "내용 조각"만 씁니다. 머리와 스타일 연결은 layout.html 이 담당합니다. */-->
-<!--/* ════════════════════════════════════════════════════════════════ */-->
-<!--/* ─ 틀 선언 (v2.15 추가) ─                                                                    */-->
-<!--/* [layout:decorate="~{layout}"] "이 화면은 layout.html 이라는 틀을 입겠다"는 선언입니다.                */-->
-<!--/* ~{layout} : layout.html 템플릿을 가리키는 표현식입니다. 확장자 .html 은 생략합니다.                  */-->
-<!--/* 결과: 아래 layout:fragment 내용이 틀의 구멍에 들어가 완성된 HTML 이 됩니다.                       */-->
+<!--/* ════════════════════════════════════════════════════════════════════ */-->
+<!--/* [question_list.html] 질문 목록 화면 (v3.02 갱신: 페이징 버튼 추가)                  */-->
+<!--/* 열리는 주소: GET /question/list?page=번호  → QuestionController.list(page)          */-->
+<!--/* 화면에 쓰이는 데이터: model 의 paging (Page 상자 = 질문 목록 + 페이지 정보)            */-->
+<!--/* ════════════════════════════════════════════════════════════════════ */-->
+<!--/* 공통 틀(layout.html)을 입는 선언입니다.                                           */-->
 <html layout:decorate="~{layout}">
-<!--/* [layout:fragment="content"] 이 div 가 틀(layout.html)의 content 구멍에 들어갑니다.                 */-->
-<!--/* 이름 "content" 는 layout.html 의 구멍 이름과 같아야 짝이 맞습니다.                                */-->
-<!--/* [class="container my-3"] 가운데 정렬 박스와 위아래 여백입니다. (v2.14 부터 같은 디자인)            */-->
+<!--/* 틀의 content 구멍에 들어갈 내용입니다.                                              */-->
 <div layout:fragment="content" class="container my-3">
-	<!--/* [table] 부트스트랩 표 디자인이 적용된 표입니다.                                                */-->
+	<!--/* [table] 부트스트랩 표 디자인입니다.                                                 */-->
 	<table class="table">
-		<!--/* [thead] 머리글 영역입니다. 배경을 어둡게 칠합니다.                                              */-->
+		<!--/* [thead] 머리글 영역입니다.                                                          */-->
 		<thead class="table-dark">
-			<!--/* [tr] 머리글의 한 가로줄입니다.                                                                */-->
+			<!--/* 머리글 한 줄입니다.                                                                 */-->
 			<tr>
-				<!--/* 번호 칸의 머리글입니다.                                                                       */-->
+				<!--/* 번호 칸의 머리글입니다.                                                             */-->
 				<th>번호</th>
-				<!--/* 제목 칸의 머리글입니다.                                                                       */-->
+				<!--/* 제목 칸의 머리글입니다.                                                             */-->
 				<th>제목</th>
-				<!--/* 작성일시 칸의 머리글입니다.                                                                   */-->
+				<!--/* 작성일시 칸의 머리글입니다.                                                         */-->
 				<th>작성일시</th>
 			</tr>
 		</thead>
-		<!--/* [tbody] 본문 영역입니다. 질문 줄이 여기서 반복해서 만들어집니다.                                  */-->
+		<!--/* [tbody] 본문 영역입니다.                                                            */-->
 		<tbody>
-			<!--/* [th:each] 질문 목록을 한 개씩 꺼내 가로줄(tr)을 질문 개수만큼 만듭니다.                            */-->
-			<!--/* question : 현재 질문 한 개, loop : 반복 상태 객체입니다. (loop.count 는 1부터 세는 번호)           */-->
-			<tr th:each="question, loop : ${questionList}">
-				<!--/* [번호 칸] loop.count 값을 글자로 넣습니다. 1번, 2번 ... 순서가 보입니다.                          */-->
+			<!--/* ─ 반복 대상 변경 (v3.02 변경) ─                                                    */-->
+			<!--/* 이전에는 questionList 를 반복했지만, 이제는 paging 을 반복합니다.                       */-->
+			<!--/* Page 객체는 반복문에 그대로 쓸 수 있고, 현재 페이지에 든 질문 10개가 한 개씩 나옵니다.      */-->
+			<tr th:each="question, loop : ${paging}">
+				<!--/* [번호 칸] loop.count 는 1부터 세는 순번입니다. (v3.02 에서는 이 칸을 쓰는 방식이 바뀌었습니다) */-->
 				<td th:text="${loop.count}"></td>
-				<!--/* [제목 칸] 칸 안에 상세 화면으로 가는 링크를 넣습니다.                                            */-->
+				<!--/* [제목 칸] 상세 화면으로 가는 링크를 넣습니다.                                        */-->
 				<td>
-					<!--/* [th:href] 링크 주소 (예: /question/detail/3). [th:text] 링크 글자는 질문 제목입니다.             */-->
+					<!--/* 질문 제목 링크입니다. 누르면 /question/detail/번호 로 이동합니다.                       */-->
 					<a th:href="@{|/question/detail/${question.id}|}" th:text="${question.subject}"></a>
 				</td>
-				<!--/* [작성일시 칸] 날짜를 'yyyy-MM-dd HH:mm' 모양으로 출력합니다. (#temporals.format)                  */-->
-				<!--/* 목록 화면은 layout.html 의 구멍 안에서만 보입니다. 머리글과 메뉴는 틀이 그려 줍니다.                */-->
+				<!--/* 작성일시를 'yyyy-MM-dd HH:mm' 모양으로 보여 줍니다.                                   */-->
 				<td th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></td>
 			</tr>
+		<!--/* [/tbody] 본문 영역이 끝납니다.                                                      */-->
 		</tbody>
+	<!--/* [/table] 표가 끝납니다.                                                              */-->
 	</table>
-	<!--/* ─ 질문 등록 버튼 (v2.16 추가) ─                                                        */-->
-	<!--/* [th:href="@{/question/create}"] 질문 등록 화면(GET /question/create)으로 가는 링크입니다.   */-->
-	<!--/* class="btn btn-primary" : 파란 버튼 모양입니다.                                         */-->
+	<!-- 페이징처리 시작 -->
+	<div th:if="${!paging.isEmpty()}">
+		<ul class="pagination justify-content-center">
+			<li class="page-item" th:classappend="${!paging.hasPrevious} ? 'disabled'">
+				<a class="page-link" th:href="@{|?page=${paging.number-1}|}">
+					<span>이전</span>
+				</a>
+			</li>
+			<li th:each="page: ${#numbers.sequence(0, paging.totalPages-1)}"
+				th:if="${page >= paging.number-5 and page <= paging.number+5}"
+				th:classappend="${page == paging.number} ? 'active'" class="page-item">
+				<a th:text="${page}" class="page-link" th:href="@{|?page=${page}|}"></a>
+			</li>
+			<li class="page-item" th:classappend="${!paging.hasNext} ? 'disabled'">
+				<a class="page-link" th:href="@{|?page=${paging.number+1}|}">
+					<span>다음</span>
+				</a>
+			</li>
+		</ul>
+	</div>
+	<!-- 페이징처리 끝 -->
+	<!--/* [질문 등록하기] 질문 등록 화면(GET /question/create)으로 가는 버튼입니다.                 */-->
 	<a th:href="@{/question/create}" class="btn btn-primary">질문 등록하기</a>
 </div>
 

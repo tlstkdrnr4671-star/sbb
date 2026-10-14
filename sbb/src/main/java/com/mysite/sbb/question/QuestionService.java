@@ -1,105 +1,100 @@
 // ══════════════════════════════════════════════════════════════════════
-// [QuestionService = 질문 "업무" 담당 클래스] (v2.09 추가)
+// [QuestionService = 질문 업무 담당] (v3.02 갱신: 페이지 단위 목록)
 // ══════════════════════════════════════════════════════════════════════
 //
-// 세 계층의 역할 분담 (이 프로젝트 전체에 반복해서 나오는 구조입니다)
-//   · Controller (창구)    : 웹 요청을 받고, 화면 이름이나 이동 주소를 정함 → QuestionController
-//   · Service    (업무)    : 실제 업무 규칙을 처리함 → 지금은 "전체 목록 가져오기" 한 가지
-//   · Repository (저장소)  : DB 와 직접 대화함 (SQL 을 자동으로 만들어 실행) → QuestionRepository
-//
-// 지금은 Service 가 하는 일이 적어서 "그냥 전달만 하는 것처럼" 보일 수 있습니다.
-// 하지만 이 자리가 있어야 나중에 "정렬", "검색", "작성자 확인" 같은 업무 규칙을 한 곳에 모을 수 있습니다.
+// 이번 단계에서 목록 조회가 "전체 한꺼번에"에서 "한 페이지씩"으로 바뀌었습니다.
+//   · 질문이 1000개면 1000개를 모두 화면에 보내면 느립니다.
+//   · 그래서 최신 질문 10개씩 나누어 보내고, 페이지 번호로 다음 묶음을 요청합니다.
+//   · 정렬 규칙(최신순)과 페이지 크기(10개)도 이 업무 담당이 정합니다.
 // ══════════════════════════════════════════════════════════════════════
-// 질문 관련 클래스가 모인 폴더 주소입니다. Question, QuestionRepository 와 같은 폴더에 있습니다.
+// 질문 관련 클래스가 모인 폴더 주소입니다.
 package com.mysite.sbb.question;
 
-// [List] 질문 목록을 돌려줄 때 쓰는 자료형입니다.
-// [LocalDateTime] 지금 이 순간의 날짜와 시각입니다. 질문을 만들 때 작성 시각으로 씁니다. (v2.16 추가)
+// [LocalDateTime] 지금 이 순간의 날짜와 시각입니다. 질문 작성 시각을 저장할 때 씁니다.
 import java.time.LocalDateTime;
+// [ArrayList] 정렬 조건(Sort.Order)을 여러 개 담을 수 있는 목록 자료형입니다.
+import java.util.ArrayList;
+// [List] 목록 자료형입니다.
 import java.util.List;
-// [Optional] "값이 있을 수도, 없을 수도 있는" 결과를 담는 상자입니다. (v2.10 추가)
-//   findById 는 찾은 질문이 있으면 상자에 넣고, 없으면 빈 상자를 돌려줍니다.
-//   그래서 null 을 직접 다루는 실수를 줄일 수 있습니다.
+// [Optional] 값이 있을 수도 없을 수도 있는 상자입니다. findById 의 결과 타입입니다.
 import java.util.Optional;
 
-// [@Service] "업무 처리 담당" 클래스라는 표시 꼬리표입니다. @Controller 와 같이 스프링이 부품(Bean)으로 등록합니다.
-// 기능상 차이는 없고, 역할 이름을 드러내기 위해 붙입니다.
+// [Page] 한 페이지 분량의 결과 상자입니다. getList 의 반환형입니다. (v3.02 추가)
+import org.springframework.data.domain.Page;
+// [PageRequest] 페이지 번호, 페이지 크기, 정렬을 묶어서 요청서(Pageable)를 만드는 도구입니다. (v3.02 추가)
+import org.springframework.data.domain.PageRequest;
+// [Pageable] 요청서의 자료형입니다. (v3.02 추가)
+import org.springframework.data.domain.Pageable;
+// [Sort] 정렬 규칙을 담는 자료형입니다. (v3.02 추가)
+import org.springframework.data.domain.Sort;
+// [@Service] 업무 처리 담당 클래스라는 표시 꼬리표입니다.
 import org.springframework.stereotype.Service;
 
-// 질문이 없을 때 던질 예외 클래스를 가져옵니다. (v2.10 추가) 다른 패키지(com.mysite.sbb)에 있어서 import 가 필요합니다.
+// 데이터가 없을 때 던지는 예외 클래스입니다.
 import com.mysite.sbb.DataNotFoundException;
 
-// [Lombok] @RequiredArgsConstructor 를 쓰기 위해 가져옵니다.
+// [Lombok] 생성자 자동 생성 꼬리표를 가져옵니다.
 import lombok.RequiredArgsConstructor;
 
-// ─ 생성자 자동 생성 ─
-// final 필드(questionRepository)를 받는 생성자를 Lombok 이 만들어 줍니다.
-// 스프링이 이 객체를 만들 때 QuestionRepository 를 넣어 주므로, 우리는 new 로 만들 필요가 없습니다. (생성자 주입, DI)
+// final 필드(questionRepository)를 받는 생성자를 자동으로 만듭니다. (생성자 주입, DI)
 @RequiredArgsConstructor
-// 이 클래스가 업무 부품임을 스프링에게 알립니다. 스프링이 시작할 때 객체를 만들어 보관합니다.
+// 업무 부품으로 스프링에 등록합니다.
 @Service
-// 질문 업무를 처리하는 클래스입니다. 화면이나 웹 요청을 전혀 모르고, 업무와 저장소만 다룹니다.
+// 질문 업무를 처리하는 클래스입니다.
 public class QuestionService {
 
-	// ─ 저장소 필드 ─
-	// DB 와 대화하는 QuestionRepository 입니다. Service 는 DB 를 직접 다루지 않고 이 저장소에게 부탁합니다.
-	//   · 인터페이스이므로 new 할 수 없습니다. 스프링이 JPA 구현체를 만들어 넣어 줍니다.
+	// 질문 저장소입니다. DB 와 대화하는 담당에게 부탁합니다.
 	private final QuestionRepository questionRepository;
 
-	// ─ getList() : 질문 목록 가져오기 ─
-	// 질문 전체 목록을 돌려주는 업무 메서드입니다.
-	//   · 매개변수가 없습니다. 지금은 "모든 질문"만 필요하기 때문입니다.
-	//   · 반환형 List<Question> : 질문 객체들이 든 목록입니다. 질문이 없으면 빈 목록입니다.
-	//   · 이름 getList 는 "목록을 가져온다"는 뜻입니다. (자바에서 get 으로 시작하는 이름은 보통 "꺼내 준다"는 뜻입니다)
-	public List<Question> getList() {
-		// ─ 저장소에 부탁 ─
-		// findAll() 은 JpaRepository 가 가진 "전체 조회" 메서드입니다.
-		//   · 실행되는 SQL 은 대략 아래와 같습니다.
-		//       select q1_0.id, q1_0.content, q1_0.create_date, q1_0.subject from question q1_0
-		//   · 결과(DB 의 여러 줄)가 Question 객체 목록으로 바뀌어 여기로 돌아옵니다.
-		//   · 이 메서드는 결과를 그대로 전달만 합니다. 나중에 정렬이나 검색 규칙을 넣을 자리입니다.
-		return this.questionRepository.findAll();
-	}
+	// ─ getList(int page) : 요청한 페이지의 질문 목록 (v3.02 변경) ─
+	// 이전에는 List<Question> 전체를 돌려줬지만, 이제는 Page 상자에 "한 페이지 분량"을 담아 돌려줍니다.
+	//   · int page : 요청한 페이지 번호입니다. 0 이 첫 페이지입니다. (예: 2 이면 세 번째 페이지)
+	//   · 반환형 Page<Question> : 질문 10개(또는 그보다 적은 수)와 페이지 정보를 함께 담은 상자입니다.
+	public Page<Question> getList(int page) {
+        // ─ 정렬 조건 목록 만들기 ─
+        // 정렬 규칙을 여러 개 담을 수 있도록 목록을 준비합니다. <Sort.Order> 는 "정렬 한 개"를 뜻하는 제네릭 표기입니다.
+        List<Sort.Order> sorts = new ArrayList<>();
+        // ─ 정렬 규칙 추가 ─
+        // Sort.Order.desc("createDate") : 작성 시각(createDate 필드) 기준 내림차순(큰 값 먼저) 정렬입니다.
+        //   · 시각이 큰 값 = 나중에 쓴 글 → 최신 글이 목록의 맨 위에 옵니다.
+        //   · desc = descending(내림차순), asc = ascending(오름차순)입니다.
+        sorts.add(Sort.Order.desc("createDate"));
+        // ─ 요청서 만들기 ─
+        // PageRequest.of(페이지 번호, 페이지 크기, 정렬) 으로 "이 페이지를, 10개씩, 이 정렬로" 라는 요청서를 만듭니다.
+        //   · 예) page=0 이면 최신 10개, page=1 이면 그 다음 10개입니다.
+        //   · SQL 로는 대략 order by create_date desc limit 10 offset (page × 10) 입니다.
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(sorts));
+        // ─ 저장소에 요청서 전달 ─
+        // 요청서를 저장소에 넘기면 해당 페이지의 질문과 페이지 정보가 Page 상자에 담겨 돌아옵니다.
+        // 이 메서드는 그 결과를 그대로 호출한 곳(QuestionController)에 전달합니다.
+        return this.questionRepository.findAll(pageable);
+    }
 
-	// ─ getQuestion(id) : 질문 한 개 가져오기 (v2.10 추가) ─
-	// 번호(id)로 질문 한 개를 찾아 돌려줍니다. 목록 화면이 아니라 상세 화면에서 씁니다.
-	//   · 매개변수 Integer id : 찾을 질문 번호입니다. (주소의 {id} 에서 넘어온 값)
-	//   · 반환형 Question      : 찾은 질문 객체 한 개입니다. 없으면 돌려주지 않고 예외를 던집니다.
+	// getQuestion(id) : 번호로 질문 한 개를 찾습니다. (v2.10 부터 있던 메서드, 설명 유지)
 	public Question getQuestion(Integer id) {
-		// ─ findById : 기본키로 찾기 ─
-		//   · JpaRepository 가 기본으로 제공하는 메서드입니다. 기본키(id)가 같은 줄을 찾습니다.
-		//   · 실행되는 SQL 은 대략 아래와 같습니다. (where 의 id 가 번호 자리입니다)
-		//       select q1_0.id, q1_0.content, q1_0.create_date, q1_0.subject from question q1_0 where q1_0.id=?
-		//   · 결과는 Optional 상자입니다. 찾았으면 질문이 들어 있고, 없으면 빈 상자입니다.
+		// findById : 기본키가 같은 질문을 찾습니다. 결과는 Optional 상자입니다.
 		Optional<Question> question = this.questionRepository.findById(id);
-		// ─ isPresent() : 상자 안에 값이 있는가? ─
-		// 상자에 질문이 들어 있으면 true 입니다. 이 검사를 먼저 하고 나서 꺼내야 안전합니다.
+		// isPresent() : 상자 안에 질문이 있으면 true 입니다.
 		if (question.isPresent()) {
-			// ─ get() : 상자에서 꺼내기 ─
-			// 앞의 isPresent() 검사를 통과했으므로 안전하게 질문 객체를 꺼내 돌려줍니다.
+			// get() : 상자에서 질문을 꺼내 돌려줍니다.
 			return question.get();
 		} else {
-			// ─ 없을 때의 처리 ─
-			// 상자가 비어 있으면 "데이터 없음" 예외를 던집니다. throw 는 "여기서 신호를 보낸다"는 뜻입니다.
-			// 이 신호는 Controller → Spring → 404 응답 순서로 전달됩니다. (DataNotFoundException 설명 참고)
+			// 질문이 없으면 "데이터 없음" 예외를 던집니다.
 			throw new DataNotFoundException("question not found");
 		}
 	}
 
-	// ─ create(제목, 내용) : 질문 저장 (v2.16 추가) ─
-	// 질문 등록 폼에서 받은 값을 받아 새 질문으로 저장합니다. 돌려줄 값이 없어서 반환형은 void 입니다.
+	// create(제목, 내용) : 질문을 저장합니다. (v2.16 부터 있던 메서드, 설명 유지)
 	public void create(String subject, String content) {
-		// 빈 질문 객체를 만듭니다. 아직 DB 에는 없습니다.
+		// 빈 질문 객체를 만듭니다.
 		Question q = new Question();
-		// 제목을 채웁니다. (Question 의 @Setter 가 만든 메서드)
+		// 제목을 채웁니다.
 		q.setSubject(subject);
 		// 내용을 채웁니다.
 		q.setContent(content);
-		// 지금 시각을 작성 시각으로 기록합니다.
+		// 작성 시각을 지금으로 채웁니다.
 		q.setCreateDate(LocalDateTime.now());
-		// save : 새 객체이므로 INSERT 가 실행되어 question 표에 한 줄이 추가됩니다.
-		//   · 대략 아래 SQL 이 실행됩니다. (자동 증가 번호 id 는 DB 가 붙입니다)
-		//       insert into question (content, create_date, subject, id) values (?, ?, ?, default)
+		// save : INSERT 로 question 표에 한 줄을 추가합니다.
 		this.questionRepository.save(q);
 	}
 }
