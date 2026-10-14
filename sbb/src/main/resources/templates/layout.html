@@ -1,28 +1,55 @@
+<!--/* ════════════════════════════════════════════════════════════════════ */-->
+<!--/* [layout.html] 모든 화면이 함께 쓰는 공통 틀 (v3.01 갱신: 메뉴바와 부트스트랩 JS 추가)     */-->
+<!--/* 순서: 머리(head) → 메뉴바 → 본문 구멍(content) → 부트스트랩 JS                           */-->
+<!--/* ════════════════════════════════════════════════════════════════════ */-->
+<!--/* [doctype html] 이 문서가 HTML5 라는 선언입니다.                                           */-->
 <!doctype html>
+<!--/* [html lang="ko"] 문서 언어가 한국어라는 표시입니다.                                        */-->
 <html lang="ko">
 
+<!--/* [head] 화면에 보이지 않는 설정 영역입니다.                                                 */-->
 <head>
 	<!-- Required meta tags -->
+	<!--/* [meta charset="utf-8"] 글자 인코딩을 UTF-8 로 정합니다. 한글이 깨지지 않게 하는 핵심 줄입니다.   */-->
 	<meta charset="utf-8">
+	<!--/* [viewport] 휴대폰 같은 작은 화면에서 기기 너비에 맞춰 보여 줍니다. 햄버거 메뉴가 이 설정과 함께 동작합니다. */-->
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<!-- Bootstrap CSS -->
+	<!--/* 부트스트랩 CSS 는 모양(색, 배치, 버튼 디자인)을 담당합니다.                                    */-->
 	<link rel="stylesheet" type="text/css" th:href="@{/bootstrap.min.css}">
 	<!-- sbb CSS -->
+	<!--/* 우리 프로젝트 CSS 입니다. 직접 만든 디자인 규칙을 둡니다.                                     */-->
 	<link rel="stylesheet" type="text/css" th:href="@{/style.css}">
+	<!--/* [title] 브라우저 탭에 보이는 제목입니다.                                                     */-->
 	<title>Hello, sbb!</title>
+<!--/* [/head] 설정 영역의 끝입니다.                                                             */-->
 </head>
 
+<!--/* [body] 실제로 보이는 내용이 들어가는 영역입니다.                                            */-->
 <body>
 	<!-- 네비게이션바 -->
+	<!--/* ─ 메뉴바 끼우기 (v3.01 추가) ─                                                          */-->
+	<!--/* [th:replace] navbar.html 파일의 navbarFragment 조각을 이 자리에 통째로 바꿔 끼웁니다.                 */-->
+	<!--/* ~{navbar :: navbarFragment} : "navbar.html 안의 navbarFragment 이름표가 붙은 요소" 라는 뜻입니다.   */-->
 	<nav th:replace="~{navbar :: navbarFragment}"></nav>
 	<!-- 기본 템플릿 안에 삽입될 내용 Start -->
+	<!--/* [layout:fragment="content"] 각 화면의 본문이 끼워질 구멍입니다. 메뉴바 아래에 자리를 잡습니다.     */-->
 	<th:block layout:fragment="content"></th:block>
 	<!-- 기본 템플릿 안에 삽입될 내용 End -->
 	<!-- Bootstrap JS -->
+	<!--/* ─ 부트스트랩 JS 연결 (v3.01 추가) ─                                                      */-->
+	<!--/* [script th:src] bootstrap.min.js 파일을 불러옵니다. 햄버거 메뉴를 펼치고 접는 동작이 여기서 나옵니다. */-->
+	<!--/* body 맨 아래에 두는 이유: 버튼 같은 화면 요소가 먼저 만들어진 뒤 스크립트가 찾을 수 있게 하기 위함입니다. */-->
 	<script th:src="@{/bootstrap.min.js}"></script>
 	<!-- 자바스크립트 Start -->
+	<!--/* ─ 자바스크립트 구멍 (v3.09 추가) ─ */-->
+	<!--/* [th:block] 화면에 아무 태그도 남기지 않는 Thymeleaf 전용 "투명 상자"입니다. */-->
+	<!--/* [layout:fragment="script"] 각 화면이 layout:fragment="script" 로 만든 스크립트가 이 자리에 끼워집니다. */-->
+	<!--/* 부트스트랩 JS 아래, body 맨 끝에 있어서 화면 요소가 다 만들어진 다음에 스크립트가 실행됩니다. */-->
 	<th:block layout:fragment="script"></th:block>
 	<!-- 자바스크립트 End -->
+<!--/* [/body] 몸 영역이 끝납니다.                                                              */-->
 </body>
 
+<!--/* [/html] 문서 전체가 끝납니다.                                                            */-->
 </html>

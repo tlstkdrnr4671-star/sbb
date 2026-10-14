@@ -1,28 +1,53 @@
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* [signup_form.html] 회원가입 입력 화면 (v3.06 추가)                              */-->
+<!--/* 사용자ID, 비밀번호, 비밀번호 확인, 이메일을 입력하고 가입 버튼을 누르면 POST /user/signup 으로 전송됩니다. */-->
+<!--/* 질문 등록 화면과 같은 구조(th:object, th:field, th:replace)입니다.                   */-->
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* 공통 틀(layout.html)을 입는 선언입니다.                                           */-->
 <html layout:decorate="~{layout}">
+<!--/* 틀의 content 구멍에 들어갈 내용입니다.                                              */-->
 <div layout:fragment="content" class="container my-3">
+	<!--/* 제목 영역의 구분선 상자입니다. border-bottom 은 아래쪽 가로줄입니다.                    */-->
 	<div class="my-3 border-bottom">
 		<div>
+			<!--/* 화면 제목입니다. h4 는 제목 글씨 크기 단계 중 하나입니다.                              */-->
 			<h4>회원가입</h4>
 		</div>
 	</div>
+	<!--/* [th:action="@{/user/signup}"] 전송 주소입니다. [th:object] 는 UserCreateForm 과 연결합니다.         */-->
+	<!--/* method="post" : 입력값을 묶어서 저장 요청으로 보냅니다.                                 */-->
 	<form th:action="@{/user/signup}" th:object="${userCreateForm}" method="post">
+		<!--/* 오류 메시지 조각을 끼워 넣습니다. 검사에 실패하면 빨간 경고가 보입니다.                     */-->
 		<div th:replace="~{form_errors :: formErrorsFragment}"></div>
+		<!--/* 사용자ID 입력 한 줄입니다.                                                           */-->
 		<div class="mb-3">
+			<!--/* 아이디 칸의 이름표입니다. for 는 아래 입력 칸과 연결됩니다.                             */-->
 			<label for="username" class="form-label">사용자ID</label>
+			<!--/* [th:field="*{username}"] 아이디 칸을 UserCreateForm.username 과 연결합니다.             */-->
 			<input type="text" th:field="*{username}" class="form-control">
 		</div>
+		<!--/* 비밀번호 입력 한 줄입니다.                                                           */-->
 		<div class="mb-3">
+			<!--/* 비밀번호 칸의 이름표입니다.                                                          */-->
 			<label for="password1" class="form-label">비밀번호</label>
+			<!--/* type="password" : 입력한 글자를 ●●● 처럼 가립니다. th:field 로 password1 과 연결합니다.      */-->
 			<input type="password" th:field="*{password1}" class="form-control">
 		</div>
+		<!--/* 비밀번호 확인 입력 한 줄입니다. 같은 비밀번호를 두 번 쓰게 해서 오타를 막습니다.            */-->
 		<div class="mb-3">
+			<!--/* 확인 칸의 이름표입니다.                                                              */-->
 			<label for="password2" class="form-label">비밀번호 확인</label>
+			<!--/* th:field="*{password2}" : password2 와 연결됩니다. 두 칸이 같은지는 컨트롤러가 확인합니다.  */-->
 			<input type="password" th:field="*{password2}" class="form-control">
 		</div>
+		<!--/* 이메일 입력 한 줄입니다.                                                             */-->
 		<div class="mb-3">
+			<!--/* 이메일 칸의 이름표입니다.                                                             */-->
 			<label for="email" class="form-label">이메일</label>
+			<!--/* type="email" : 브라우저가 이메일 모양을 먼저 확인해 줍니다. 서버에서는 @Email 이 한 번 더 확인합니다. */-->
 			<input type="email" th:field="*{email}" class="form-control">
 		</div>
+		<!--/* 가입 버튼입니다. 누르면 폼이 POST 로 전송됩니다.                                        */-->
 		<button type="submit" class="btn btn-primary">회원가입</button>
 	</form>
 </div>

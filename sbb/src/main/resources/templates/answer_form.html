@@ -1,13 +1,29 @@
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* [answer_form.html] 답변 수정 화면 (v3.09 새 파일) */-->
+<!--/* 열리는 주소: GET /answer/modify/{답변번호}  → AnswerController.answerModify */-->
+<!--/* 저장 주소  : POST /answer/modify/{답변번호} (form 에 action 이 없어서 지금 주소로 전송) */-->
+<!--/* ════════════════════════════════════════════════════════════════ */-->
+<!--/* 공통 틀(layout.html)을 입습니다. */-->
 <html layout:decorate="~{layout}">
+<!--/* 틀의 content 구멍에 들어갈 내용입니다. */-->
 <div layout:fragment="content" class="container">
+	<!--/* 화면 제목입니다. border-bottom : 아래 밑줄, pb-2 : 아래 안쪽 여백 */-->
 	<h5 class="my-3 border-bottom pb-2">답변 수정</h5>
+	<!--/* [th:object="${answerForm}"] 이 폼은 컨트롤러가 넘긴 AnswerForm 객체와 연결됩니다. */-->
+	<!--/* action 이 없으므로 지금 주소(/answer/modify/번호)로 POST 전송합니다. */-->
 	<form th:object="${answerForm}" method="post">
+		<!--/* 숨은 CSRF 토큰입니다. th:action 이 없어서 직접 넣습니다. 없으면 403 오류로 막힙니다. */-->
 		<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+		<!--/* 입력 오류 메시지 조각을 끼워 넣습니다. 내용을 비우고 저장하면 경고가 보입니다. */-->
 		<div th:replace="~{form_errors :: formErrorsFragment}"></div>
+		<!--/* 내용 입력 한 묶음입니다. mb-3 : 아래 여백 */-->
 		<div class="mb-3">
+			<!--/* [label for="content"] id 가 content 인 입력 칸의 이름표입니다. */-->
 			<label for="content" class="form-label">내용</label>
+			<!--/* [th:field="*{content}"] AnswerForm.content 와 연결됩니다. 수정 화면에서는 기존 내용이 미리 채워져 보입니다. */-->
 			<textarea th:field="*{content}" class="form-control" rows="10"></textarea>
 		</div>
+		<!--/* 저장하기 버튼입니다. 누르면 POST 로 전송됩니다. */-->
 		<input type="submit" value="저장하기" class="btn btn-primary my-2">
 	</form>
 </div>

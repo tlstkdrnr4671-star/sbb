@@ -1,53 +1,133 @@
+<!--/* ════════════════════════════════════════════════════════════════════ */-->
+<!--/* [question_list.html] 질문 목록 화면 (v3.02 갱신: 페이징 버튼 추가)                  */-->
+<!--/* 열리는 주소: GET /question/list?page=번호  → QuestionController.list(page)          */-->
+<!--/* 화면에 쓰이는 데이터: model 의 paging (Page 상자 = 질문 목록 + 페이지 정보)            */-->
+<!--/* ════════════════════════════════════════════════════════════════════ */-->
+<!--/* 공통 틀(layout.html)을 입는 선언입니다.                                           */-->
 <html layout:decorate="~{layout}">
+<!--/* 틀의 content 구멍에 들어갈 내용입니다.                                              */-->
 <div layout:fragment="content" class="container my-3">
+	<!--/* ─ 상단 줄: 질문 등록 버튼 + 검색 칸 (v3.13 추가) ─ */-->
+	<!--/* [row] 부트스트랩 가로 줄입니다. 안의 칸들을 옆으로 나란히 놓습니다. my-3 : 위아래 여백 */-->
 	<div class="row my-3">
+		<!--/* [col-6] 한 줄 12칸 중 6칸(절반)을 차지하는 칸입니다. 왼쪽 절반: 질문 등록 버튼 */-->
 		<div class="col-6">
+			<!--/* [질문 등록하기] 질문 등록 화면(GET /question/create)으로 가는 버튼입니다.                 */-->
 			<a th:href="@{/question/create}" class="btn btn-primary">질문 등록하기</a>
 		</div>
+		<!--/* 오른쪽 절반: 검색 칸 */-->
 		<div class="col-6">
+			<!--/* [input-group] 입력 칸과 버튼을 한 덩어리로 붙여서 보여 주는 부트스트랩 디자인입니다. */-->
 			<div class="input-group">
+				<!--/* [검색어 입력 칸] id="search_kw" 로 스크립트가 값을 꺼냅니다. */-->
+				<!--/* [th:value="${kw}"] 검색한 뒤에도 입력 칸에 지금 검색어가 그대로 남아 보이게 합니다. */-->
 				<input type="text" id="search_kw" class="form-control" th:value="${kw}">
+				<!--/* [찾기 버튼] type="button" 이라 누른다고 바로 전송되지 않습니다. 아래 스크립트가 클릭을 처리합니다. */-->
 				<button class="btn btn-outline-secondary" type="button" id="btn_search">찾기</button>
 			</div>
 		</div>
 	</div>
+	<!--/* [table] 부트스트랩 표 디자인입니다.                                                 */-->
 	<table class="table">
+		<!--/* [thead] 머리글 영역입니다.                                                          */-->
 		<thead class="table-dark">
+			<!--/* 머리글 한 줄입니다.                                                                 */-->
+			<!--/* [text-center] (v3.08 추가) 머리글 글자를 가운데 정렬합니다. 아래 본문 줄도 같은 방식입니다. */-->
 			<tr class="text-center">
+				<!--/* 번호 칸의 머리글입니다.                                                             */-->
 				<th>번호</th>
+				<!--/* 제목 칸의 머리글입니다.                                                             */-->
+				<!--/* [style="width:50%"] (v3.08 추가) 제목 칸을 표 너비의 절반으로 넓게 씁니다. 인라인 스타일입니다. */-->
 				<th style="width:50%">제목</th>
+				<!--/* 작성자 이름을 보여 주는 새 칸의 머리글입니다. (v3.08 추가) */-->
 				<th>글쓴이</th>
+				<!--/* 작성일시 칸의 머리글입니다.                                                         */-->
 				<th>작성일시</th>
 			</tr>
 		</thead>
+		<!--/* [tbody] 본문 영역입니다.                                                            */-->
 		<tbody>
+			<!--/* ─ 반복 대상 변경 (v3.02 변경) ─                                                    */-->
+			<!--/* 이전에는 questionList 를 반복했지만, 이제는 paging 을 반복합니다.                       */-->
+			<!--/* Page 객체는 반복문에 그대로 쓸 수 있고, 현재 페이지에 든 질문 10개가 한 개씩 나옵니다.      */-->
+			<!--/* [text-center] (v3.08 추가) 질문 한 줄의 글자를 가운데 정렬합니다. 제목 칸만 왼쪽 정렬로 되돌립니다. */-->
 			<tr class="text-center" th:each="question, loop : ${paging}">
+				<!--/* ─ 번호 칸 계산 방식 (v3.03 변경) ─                                                          */-->
+				<!--/* 이전에는 loop.count (1, 2, 3 …) 로 번호를 매겼습니다. 페이지를 넘기면 번호가 1부터 다시 시작해서 어색합니다. */-->
+				<!--/* 이제는 "전체 글 수에서 지금 위치를 뺀 값"으로 번호를 매깁니다. 최신 글이 가장 큰 번호를 받습니다.       */-->
+				<!--/*                                                                                       */-->
+				<!--/* ─ 계산식 ─                                                                              */-->
+				<!--/*   번호 = 전체 개수 - (현재 페이지 번호 × 페이지 크기) - 줄 순서(loop.index)                  */-->
+				<!--/*   · paging.getTotalElements : 질문 전체 개수입니다.                                       */-->
+				<!--/*   · paging.number           : 지금 보고 있는 페이지 번호입니다. (0부터 시작)                 */-->
+				<!--/*   · paging.size             : 한 페이지에 담긴 개수입니다. (서비스에서 10으로 정했습니다)      */-->
+				<!--/*   · loop.index              : 이 페이지 안에서의 줄 순서입니다. (0부터 시작)                  */-->
+				<!--/*                                                                                       */-->
+				<!--/* ─ 예시: 전체 25개, 한 페이지 10개 ─                                                      */-->
+				<!--/*   0페이지 첫 줄 : 25 - (0 × 10) - 0 = 25   ← 가장 최신 글                                  */-->
+				<!--/*   0페이지 둘째 줄: 25 - (0 × 10) - 1 = 24                                                  */-->
+				<!--/*   1페이지 첫 줄 : 25 - (1 × 10) - 0 = 15   ← 두 번째 페이지의 맨 위                          */-->
+				<!--/*   마지막 페이지 : 나머지 개수만큼 줄이 있고, 번호는 1 까지 내려갑니다.                          */-->
+				<!--/*                                                                                       */-->
+				<!--/* ─ ※ 확인 포인트 ─                                                                        */-->
+				<!--/* Thymeleaf 는 자바의 메서드를 부를 때 보통 getTotalElements 의 get 을 뗀 이름(paging.totalElements)을 씁니다. */-->
+				<!--/* 여기 적힌 표기가 실행할 때 "속성을 찾을 수 없다"는 오류를 낼 수 있습니다. 오류가 나면 이 부분을 먼저 확인하세요.  */-->
 				<td th:text="${paging.getTotalElements - (paging.number * paging.size) - loop.index}"></td>
+				<!--/* [제목 칸] 상세 화면으로 가는 링크를 넣습니다.                                        */-->
+				<!--/* [text-start] (v3.08 추가) 제목 칸은 왼쪽 정렬로 둡니다. 가운데 정렬 설정(text-center)을 되돌립니다. */-->
 				<td class="text-start">
+					<!--/* 질문 제목 링크입니다. 누르면 /question/detail/번호 로 이동합니다.                       */-->
 					<a th:href="@{|/question/detail/${question.id}|}" th:text="${question.subject}"></a>
+					<!--/* ─ 답변 개수 표시 (v3.04 추가) ─                                                          */-->
+					<!--/* 제목 옆에 빨간 작은 숫자로 "이 질문에 달린 답변이 몇 개인지"를 보여 줍니다.                    */-->
+					<!--/* [span] 글자 조각 상자입니다. text-danger : 빨간 글씨, small : 작은 글씨, ms-2 : 왼쪽 여백 2 단계입니다. */-->
+					<!--/* [th:if="${#lists.size(question.answerList) > 0}"] 조건이 참일 때만 이 span 을 만듭니다.          */-->
+					<!--/*   · #lists.size(목록) : 목록의 개수입니다. question.answerList 는 이 질문의 답변 목록입니다.        */-->
+					<!--/*   · > 0 : "답변이 1개 이상"이라는 조건입니다. 답변이 없으면 span 자체가 만들어지지 않습니다.           */-->
 					<span class="text-danger small ms-2" th:if="${#lists.size(question.answerList) > 0}"
+						<!--/* [th:text] 답변 개수(숫자)를 글자로 넣습니다. 예) 답변이 3개면 제목 옆에 빨간 숫자 3 이 붙습니다.      */-->
 						th:text="${#lists.size(question.answerList)}">
+					<!--/* [/span] 답변 개수 표시 상자가 끝납니다.                                                      */-->
 					</span>
 				</td>
+				<!--/* 글쓴이 칸입니다. 작성자가 있을 때만 아이디를 보여 줍니다. (v3.08 추가) */-->
 				<td><span th:if="${question.author != null}" th:text="${question.author.username}"></span></td>
+				<!--/* 작성일시를 'yyyy-MM-dd HH:mm' 모양으로 보여 줍니다.                                   */-->
 				<td th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></td>
 			</tr>
+		<!--/* [/tbody] 본문 영역이 끝납니다.                                                      */-->
 		</tbody>
+	<!--/* [/table] 표가 끝납니다.                                                              */-->
 	</table>
 	<!-- 페이징처리 시작 -->
+	<!--/* ═══ 페이지 이동 버튼 묶음 (v3.02 추가, v3.13 변경) ═══ */-->
+	<!--/* [th:if="${!paging.isEmpty()}"] 질문이 하나라도 있을 때만 페이지 버튼을 보여 줍니다. (! 는 "아니다") */-->
 	<div th:if="${!paging.isEmpty()}">
+		<!--/* [pagination] 부트스트랩 페이지 버튼 디자인, justify-content-center : 가운데 정렬 */-->
 		<ul class="pagination justify-content-center">
+			<!--/* [이전 버튼] th:classappend : 조건이 참이면 class 에 글자를 덧붙입니다. */-->
+			<!--/*   · 이전 페이지가 없으면(첫 페이지) 'disabled' 가 붙어 버튼이 흐리게, 눌리지 않게 됩니다. */-->
 			<li class="page-item" th:classappend="${!paging.hasPrevious} ? 'disabled'">
+				<!--/* ─ 링크 대신 data-page (v3.13 변경) ─ */-->
+				<!--/* 예전에는 href="?page=번호" 로 바로 이동했지만, 그러면 검색어(kw)가 주소에서 빠집니다. */-->
+				<!--/* 이제는 이동할 페이지 번호만 data-page 에 적어 두고, 스크립트가 검색어와 함께 숨은 폼으로 전송합니다. */-->
 				<a class="page-link" href="javascript:void(0)" th:data-page="${paging.number-1}">
 					<span>이전</span>
 				</a>
 			</li>
+			<!--/* [페이지 번호 버튼들] */-->
+			<!--/*   · #numbers.sequence(0, 전체페이지수-1) : 0, 1, 2 ... 처럼 번호 목록을 만들어 하나씩 반복합니다. */-->
+			<!--/*   · th:if : 지금 페이지 기준 앞뒤 5개 번호만 보여 줍니다. (페이지가 100개여도 버튼은 최대 11개) */-->
+			<!--/*   · th:classappend : 지금 보고 있는 페이지 번호에는 'active'(파란 강조)를 붙입니다. */-->
 			<li th:each="page: ${#numbers.sequence(0, paging.totalPages-1)}"
 				th:if="${page >= paging.number-5 and page <= paging.number+5}"
 				th:classappend="${page == paging.number} ? 'active'" class="page-item">
+				<!--/* 번호 글자를 보여 주고, 누르면 그 번호를 data-page 로 스크립트에 넘깁니다. (v3.13 변경) */-->
 				<a th:text="${page}" class="page-link" href="javascript:void(0)" th:data-page="${page}"></a>
 			</li>
+			<!--/* [다음 버튼] 다음 페이지가 없으면(마지막 페이지) 'disabled' 가 붙습니다. */-->
 			<li class="page-item" th:classappend="${!paging.hasNext} ? 'disabled'">
+				<!--/* 다음 페이지 번호(지금 번호 + 1)를 data-page 에 적어 둡니다. (v3.13 변경) */-->
 				<a class="page-link" href="javascript:void(0)" th:data-page="${paging.number+1}">
 					<span>다음</span>
 				</a>
@@ -55,23 +135,39 @@
 		</ul>
 	</div>
 	<!-- 페이징처리 끝 -->
+	<!--/* ─ 숨은 검색 폼 (v3.13 추가) ─ */-->
+	<!--/* 화면에 보이지 않는 폼입니다. 검색어(kw)와 페이지(page)를 함께 GET /question/list 로 보냅니다. */-->
+	<!--/* method="get" 이라 값이 주소 뒤에 붙습니다. 예) /question/list?kw=스프링&page=2 */-->
 	<form th:action="@{/question/list}" method="get" id="searchForm">
+		<!--/* 숨은 검색어 칸입니다. 처음에는 지금 검색어가 들어 있습니다. */-->
 		<input type="hidden" id="kw" name="kw" th:value="${kw}">
+		<!--/* 숨은 페이지 칸입니다. 처음에는 지금 페이지 번호가 들어 있습니다. */-->
 		<input type="hidden" id="page" name="page" th:value="${paging.number}">
 	</form>
 </div>
+<!--/* ═══ 페이지 이동, 검색 스크립트 (v3.13 추가) ═══ */-->
+<!--/* layout.html 의 script 구멍에 끼워집니다. */-->
 <script layout:fragment="script" type='text/javascript'>
+	// 페이지 버튼(class="page-link")을 모두 찾습니다.
 	const page_elements = document.getElementsByClassName("page-link");
+	// 버튼마다 클릭 동작을 붙입니다.
 	Array.from(page_elements).forEach(function (element) {
 		element.addEventListener('click', function () {
+			// 누른 버튼의 data-page 값(이동할 페이지 번호)을 숨은 page 칸에 넣습니다.
 			document.getElementById('page').value = this.dataset.page;
+			// 숨은 폼을 전송합니다. 검색어(kw)는 그대로 유지된 채 페이지만 바뀝니다.
 			document.getElementById('searchForm').submit();
 		});
 	});
+	// "찾기" 버튼을 찾습니다.
 	const btn_search = document.getElementById("btn_search");
+	// 찾기 버튼을 누르면 실행할 동작입니다.
 	btn_search.addEventListener('click', function () {
+		// 보이는 검색 칸(search_kw)의 글자를 숨은 kw 칸으로 옮깁니다.
 		document.getElementById('kw').value = document.getElementById('search_kw').value;
+		// 새 검색은 결과의 첫 페이지(0)부터 보여 줘야 하므로 page 를 0 으로 바꿉니다.
 		document.getElementById('page').value = 0;  // 검색버튼을 클릭할 경우 0페이지부터 조회한다.
+		// 숨은 폼을 전송해서 검색 결과 목록을 받습니다.
 		document.getElementById('searchForm').submit();
 	});
 </script>
