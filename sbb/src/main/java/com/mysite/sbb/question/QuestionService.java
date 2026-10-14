@@ -27,14 +27,31 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 // [Sort] 정렬 규칙을 담는 자료형입니다. (v3.02 추가)
 import org.springframework.data.domain.Sort;
+// [Specification] 자바 코드로 검색 조건을 조립하는 JPA 도구입니다. (v3.13 추가, 아래 search 메서드에서 사용)
+import org.springframework.data.jpa.domain.Specification;
 // [@Service] 업무 처리 담당 클래스라는 표시 꼬리표입니다.
 import org.springframework.stereotype.Service;
 
 // 데이터가 없을 때 던지는 예외 클래스입니다.
 import com.mysite.sbb.DataNotFoundException;
+// 답변 내용까지 검색하기 위해 Answer 타입을 가져옵니다. (v3.13 추가)
+import com.mysite.sbb.answer.Answer;
 // [SiteUser] 질문 작성자 회원의 타입입니다. (v3.08 추가)
 import com.mysite.sbb.user.SiteUser;
 
+// ── 아래 6개는 "조건을 코드로 만드는" JPA Criteria 도구들입니다. (v3.13 추가) ──
+// [CriteriaBuilder] like, or 같은 조건식을 만들어 주는 공장입니다.
+import jakarta.persistence.criteria.CriteriaBuilder;
+// [CriteriaQuery] 만들고 있는 쿼리 전체입니다. distinct(중복 제거) 설정에 씁니다.
+import jakarta.persistence.criteria.CriteriaQuery;
+// [Join] 두 표를 연결(조인)한 결과입니다.
+import jakarta.persistence.criteria.Join;
+// [JoinType] 조인 방식입니다. LEFT 는 연결 대상이 없어도 기준 쪽 줄을 남기는 방식입니다.
+import jakarta.persistence.criteria.JoinType;
+// [Predicate] 완성된 조건식(참/거짓을 판단하는 식)입니다.
+import jakarta.persistence.criteria.Predicate;
+// [Root] 쿼리의 기준 엔티티(여기서는 Question)입니다. SQL 의 from question q 에 해당합니다.
+import jakarta.persistence.criteria.Root;
 // [Lombok] 생성자 자동 생성 꼬리표를 가져옵니다.
 import lombok.RequiredArgsConstructor;
 
@@ -48,11 +65,54 @@ public class QuestionService {
 	// 질문 저장소입니다. DB 와 대화하는 담당에게 부탁합니다.
 	private final QuestionRepository questionRepository;
 
+	// ══ search(검색어) : 자바 코드로 만든 검색 조건 (v3.13 추가) ══
+	// 같은 검색을 두 가지 방법으로 만들어 볼 수 있게 남겨 둔 메서드입니다.
+	//   ① 이 search() : Specification(자바 코드)으로 조건 조립
+	//   ② QuestionRepository 의 @Query : JPQL 문장으로 직접 작성  ← 지금 getList 가 실제로 쓰는 방법
+	// [@SuppressWarnings("unused")] "이 메서드는 지금 안 쓰인다"는 컴파일러 경고를 끄는 꼬리표입니다.
+	// ①을 쓰고 싶으면 getList 에서 this.questionRepository.findAll(search(kw), pageable) 로 바꾸면 됩니다.
+	@SuppressWarnings("unused")
+	// 검색어를 받아 "질문 검색 조건"(Specification)을 만들어 돌려줍니다.
+	private Specification<Question> search(String kw) {
+		// new Specification<>() { ... } : 이름 없는 클래스(익명 클래스)로 조건 객체를 바로 만듭니다.
+		return new Specification<>() {
+			// 직렬화 버전 번호입니다. Specification 이 Serializable 이라서 붙이는 관례적인 값입니다. (동작에는 영향 없음)
+			private static final long serialVersionUID = 1L;
+
+			// 아래 toPredicate 는 Specification 규격에 정해진 메서드를 "다시 정의(재정의)"한 것입니다.
+			@Override
+			// toPredicate(기준, 쿼리, 조건공장) : 실제 검색 조건을 만드는 곳입니다.
+			//   · q     : 기준 엔티티 Question (SQL 의 q)
+			//   · query : 쿼리 전체
+			//   · cb    : 조건 만드는 도구
+			public Predicate toPredicate(Root<Question> q, CriteriaQuery<?> query, CriteriaBuilder cb) {
+				// 한 질문에 답변이 여러 개면 조인 결과에 같은 질문이 여러 줄 생깁니다. distinct 로 한 번만 나오게 합니다.
+				query.distinct(true); // 중복을 제거
+				// u1 : 질문 → 질문 작성자(SiteUser) 연결. 작성자가 없는 질문도 남기려고 LEFT 조인합니다.
+				Join<Question, SiteUser> u1 = q.join("author", JoinType.LEFT);
+				// a : 질문 → 답변 목록 연결. 답변이 없는 질문도 남깁니다.
+				Join<Question, Answer> a = q.join("answerList", JoinType.LEFT);
+				// u2 : 답변 → 답변 작성자 연결.
+				Join<Answer, SiteUser> u2 = a.join("author", JoinType.LEFT);
+				// cb.or(조건1, 조건2, ...) : 다섯 조건 중 하나라도 맞으면 검색 결과에 넣습니다.
+				// cb.like(값, "%검색어%") : 검색어가 "어디든 들어 있으면" 참입니다. % 는 "아무 글자 0개 이상"이라는 뜻입니다.
+				//   1) 제목  2) 내용  3) 질문 작성자 아이디  4) 답변 내용  5) 답변 작성자 아이디
+				return cb.or(cb.like(q.get("subject"), "%" + kw + "%"), // 제목
+						cb.like(q.get("content"), "%" + kw + "%"), // 내용
+						cb.like(u1.get("username"), "%" + kw + "%"), // 질문 작성자
+						cb.like(a.get("content"), "%" + kw + "%"), // 답변 내용
+						cb.like(u2.get("username"), "%" + kw + "%")); // 답변 작성자
+			}
+		};
+	}
+
 	// ─ getList(int page) : 요청한 페이지의 질문 목록 (v3.02 변경) ─
 	// 이전에는 List<Question> 전체를 돌려줬지만, 이제는 Page 상자에 "한 페이지 분량"을 담아 돌려줍니다.
 	//   · int page : 요청한 페이지 번호입니다. 0 이 첫 페이지입니다. (예: 2 이면 세 번째 페이지)
 	//   · 반환형 Page<Question> : 질문 10개(또는 그보다 적은 수)와 페이지 정보를 함께 담은 상자입니다.
-	public Page<Question> getList(int page) {
+	// ─ 검색어 매개변수 추가 (v3.13 변경) ─
+	// kw(검색어)가 추가되었습니다. 이제 "검색어가 들어간 질문들" 중에서 한 페이지를 돌려줍니다.
+	public Page<Question> getList(int page, String kw) {
 		// ─ 정렬 조건 목록 만들기 ─
 		// 정렬 규칙을 여러 개 담을 수 있도록 목록을 준비합니다. <Sort.Order> 는 "정렬 한 개"를 뜻하는 제네릭 표기입니다.
 		List<Sort.Order> sorts = new ArrayList<>();
@@ -69,7 +129,9 @@ public class QuestionService {
 		// ─ 저장소에 요청서 전달 ─
 		// 요청서를 저장소에 넘기면 해당 페이지의 질문과 페이지 정보가 Page 상자에 담겨 돌아옵니다.
 		// 이 메서드는 그 결과를 그대로 호출한 곳(QuestionController)에 전달합니다.
-		return this.questionRepository.findAll(pageable);
+		// ─ 검색 쿼리 호출 (v3.13 변경) ─
+		// 저장소의 findAllByKeyword(검색어, 요청서) 를 부릅니다. 직접 작성한 @Query 문장(QuestionRepository 참고)이 실행됩니다.
+		return this.questionRepository.findAllByKeyword(kw, pageable);
 	}
 
 	// getQuestion(id) : 번호로 질문 한 개를 찾습니다. (v2.10 부터 있던 메서드, 설명 유지)

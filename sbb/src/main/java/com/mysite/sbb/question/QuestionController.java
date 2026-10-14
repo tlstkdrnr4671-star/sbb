@@ -65,11 +65,18 @@ public class QuestionController {
 	// [GET /question/list] 질문 목록 화면입니다. (v3.02 부터 ?page= 로 페이지를 나눕니다)
 	@GetMapping("/list")
 	// 목록 화면 요청을 처리합니다. (설명은 v3.02 와 같습니다)
-	public String list(Model model, @RequestParam(value = "page", defaultValue = "0") int page) {
+	public String list(Model model, @RequestParam(value = "page", defaultValue = "0") int page,
+			// ─ 검색어 받기 (v3.13 추가) ─
+			// 주소의 ?kw=검색어 값을 문자열 kw 로 받습니다. 검색어가 없으면 빈 글자("")가 됩니다.
+			//   · 예) /question/list?page=0&kw=스프링  → page=0, kw="스프링"
+			//   · 빈 글자로 검색하면 like '%%' 가 되어 모든 질문이 나옵니다. 그래서 검색 전 화면과 같습니다.
+			@RequestParam(value = "kw", defaultValue = "") String kw) {
 		// 서비스에게 그 페이지의 질문들을 요청합니다.
-		Page<Question> paging = this.questionService.getList(page);
+		Page<Question> paging = this.questionService.getList(page, kw);
 		// 페이지 상자를 "paging" 이름표로 담습니다.
 		model.addAttribute("paging", paging);
+		// 검색어를 화면에 다시 넘깁니다. 검색 칸과 숨은 폼에 지금 검색어를 채워 두기 위해서입니다. (v3.13 추가)
+		model.addAttribute("kw", kw);
 		// 목록 화면(question_list.html)을 그립니다.
 		return "question_list";
 	}

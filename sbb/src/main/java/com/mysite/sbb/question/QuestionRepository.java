@@ -21,8 +21,14 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 // [Pageable] "몇 페이지를, 한 페이지에 몇 개씩, 어떤 순서로" 가져올지 정하는 요청서입니다. (v3.02 추가)
 import org.springframework.data.domain.Pageable;
+// [Specification] 코드로 만든 검색 조건 타입입니다. (v3.13 추가)
+import org.springframework.data.jpa.domain.Specification;
 // [JpaRepository] 기본 저장소 규격입니다. (save, findById, findAll 등을 물려받습니다)
 import org.springframework.data.jpa.repository.JpaRepository;
+// [@Query] 메서드 이름 규칙 대신 쿼리 문장을 직접 적을 때 쓰는 꼬리표입니다. (v3.13 추가)
+import org.springframework.data.jpa.repository.Query;
+// [@Param] 쿼리 문장 속 :kw 자리에 어떤 매개변수를 넣을지 연결하는 꼬리표입니다. (v3.13 추가)
+import org.springframework.data.repository.query.Param;
 
 // <Question, Integer> : 다룰 엔티티는 Question, 기본키 자료형은 Integer 입니다.
 public interface QuestionRepository extends JpaRepository<Question, Integer> {
@@ -50,4 +56,34 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
 	//   · limit 과 offset 이 "몇 개를, 어디서부터" 가져올지를 정합니다. (DB 가 페이지를 잘라 줍니다)
 	//   · 이 메서드는 기본 제공 findAll(Pageable) 과 같은 기능을 Page 타입으로 드러내 준 것입니다.
 	Page<Question> findAll(Pageable pageable);
+
+	// ─ 조건 + 페이지로 찾기 (v3.13 추가) ─
+	// QuestionService.search() 로 만든 조건(spec)과 페이지 요청서로 질문을 찾습니다. (지금은 @Query 방식을 사용 중)
+	Page<Question> findAll(Specification<Question> spec, Pageable pageable);
+	
+	// ══ 검색 쿼리 직접 작성 (v3.13 추가) ══
+	// 이 문장은 SQL 이 아니라 JPQL 입니다. 표 이름 대신 엔티티(Question, Answer, SiteUser) 이름을 씁니다.
+	// 글자를 + 로 이어 붙인 것일 뿐, 실제로는 한 줄짜리 쿼리입니다. 읽는 법:
+	//   select distinct q            → 질문 q 를 중복 없이 고른다
+	//   from Question q              → 기준은 질문
+	//   left outer join SiteUser u1 on q.author=u1        → 질문 작성자 연결
+	//   left outer join Answer a on a.question=q          → 그 질문의 답변들 연결
+	//   left outer join SiteUser u2 on a.author=u2        → 답변 작성자 연결
+	//   where 제목/내용/질문작성자/답변내용/답변작성자 중 하나라도 like %:kw%
+	// :kw 는 아래 @Param("kw") 로 연결된 검색어가 들어갈 자리입니다.
+	@Query("select "
+            + "distinct q "
+            + "from Question q " 
+            + "left outer join SiteUser u1 on q.author=u1 "
+            + "left outer join Answer a on a.question=q "
+            + "left outer join SiteUser u2 on a.author=u2 "
+            + "where "
+            + "   q.subject like %:kw% "
+            + "   or q.content like %:kw% "
+            + "   or u1.username like %:kw% "
+            + "   or a.content like %:kw% "
+            + "   or u2.username like %:kw% ")
+    // findAllByKeyword(검색어, 요청서) : 위 쿼리를 실행하고 결과를 페이지 단위(Page)로 돌려줍니다.
+    // 페이지 요청서(Pageable)의 정렬(최신순)과 10개씩 자르기도 함께 적용됩니다.
+    Page<Question> findAllByKeyword(@Param("kw") String kw, Pageable pageable);
 }
