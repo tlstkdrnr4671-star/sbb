@@ -1,25 +1,54 @@
+// ============================================================
+// [강의 노트] build.gradle = "빌드 설명서"입니다.
+// Gradle(그래들)이라는 빌드 도구가 이 파일을 읽고,
+//   - 필요한 라이브러리를 인터넷에서 내려받고
+//   - 자바 코드를 컴파일하고
+//   - 프로그램을 실행하거나 테스트합니다.
+// 문법은 Groovy(그루비)인데, 자바와 많이 닮아 읽기 어렵지 않습니다.
+// ============================================================
+// plugins 블록: 이 프로젝트가 쓸 "플러그인(기능 확장 조각)"을 적는 곳입니다.
 plugins {
+	// 자바 프로젝트로 빌드하겠다는 선언입니다. 자바 컴파일, 테스트 실행 기능이 켜집니다.
 	id 'java'
+	// 스프링 부트 플러그인입니다. version '3.2.1' 은 스프링 부트 버전을 3.2.1로 정한다는 뜻입니다.
+	// 이 플러그인 덕분에 bootRun(실행) 같은 스프링 부트 전용 명령을 쓸 수 있습니다.
 	id 'org.springframework.boot' version '3.2.1'
+	// 의존성 관리 플러그인입니다. 스프링 관련 라이브러리들의 "서로 맞는 버전"을 자동으로 맞춰 줍니다.
+	// 그래서 라이브러리마다 버전을 하나하나 적지 않아도 됩니다.
 	id 'io.spring.dependency-management' version '1.1.4'
 }
 
+// group: 이 프로젝트를 구분하는 조직(묶음) 이름입니다. 보통 패키지 이름의 앞부분과 맞춥니다.
 group = 'com.mysite'
+// version: 프로젝트 버전입니다. SNAPSHOT 은 "아직 개발 중인 임시 버전"이라는 뜻입니다.
 version = '0.0.1-SNAPSHOT'
 
+// java 블록: 자바 컴파일 옵션을 적는 곳입니다.
 java {
+	// 자바 21 문법으로 컴파일하겠다는 설정입니다. 내 PC에 설치된 JDK 버전과 맞아야 합니다.
 	sourceCompatibility = '21'
 }
 
+// repositories 블록: 라이브러리를 내려받을 "창고 위치"를 정합니다.
 repositories {
+	// mavenCentral() 은 전 세계 자바 라이브러리가 모여 있는 공개 창고(Maven Central)입니다.
 	mavenCentral()
 }
 
+// dependencies 블록: 이 프로젝트가 필요로 하는 "외부 라이브러리 목록"입니다.
+// implementation     : 실행할 때도 필요한 라이브러리
+// testImplementation : 테스트할 때만 필요한 라이브러리
 dependencies {
+	// spring-boot-starter-web: 웹 애플리케이션을 만드는 데 필요한 라이브러리 "묶음(스타터)"입니다.
+	// 내장 톰캣 웹 서버, 웹 요청을 처리하는 스프링 MVC 등이 한꺼번에 들어 있습니다.
+	// "스타터"란 자주 함께 쓰는 라이브러리를 한 번에 가져오는 세트 포장이라고 생각하면 됩니다.
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// 테스트용 묶음입니다. JUnit(시험 도구), AssertJ(검증 도구) 등이 들어 있습니다.
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+// tasks: 빌드 작업 목록입니다. 여기서는 'test'(테스트 실행) 작업의 설정을 바꿉니다.
 tasks.named('test') {
+	// 테스트 실행기를 JUnit 5 방식으로 쓰겠다는 선언입니다. 이 설정이 있어야 @Test 가 실행됩니다.
 	useJUnitPlatform()
 }

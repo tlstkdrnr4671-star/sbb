@@ -1,1 +1,4 @@
+// [강의 노트] settings.gradle = 이 빌드에 포함될 프로젝트들의 "목차"를 정하는 파일입니다.
+// 지금은 프로젝트가 하나뿐이라 짧습니다.
+// rootProject.name : 최상위 프로젝트 이름을 sbb 로 정합니다. (IDE나 빌드 결과물 이름에 쓰임)
 rootProject.name = 'sbb'
